@@ -21,6 +21,7 @@ import FundingPage from "../pages/Funding/FundingPage";
 import DashboardHome from "../pages/Dashboard/DashboardHome";
 import MyDonationRequests from "../pages/Dashboard/MydonationRequests";
 import CreateDonationRequest from "../components/form/CreateDonationRequest";
+import DonationRequestDetails from "../pages/Donation/DonationRequestDetails";
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +50,14 @@ export const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <DonationRequests />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "/donation-requests/:id",
+        element: (
+          <PrivateRoute>
+            <DonationRequestDetails />
           </PrivateRoute>
         ),
       },

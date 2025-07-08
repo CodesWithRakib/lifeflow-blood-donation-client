@@ -3,12 +3,15 @@ import { useForm } from "react-hook-form";
 import useAuth from "../../hooks/useAuth";
 import axios from "axios";
 import { Calendar, Clock, Droplet, MapPin, Hospital } from "lucide-react";
+import useAxios from "../../hooks/useAxios";
+import toast from "react-hot-toast";
 
 const CreateDonationRequest = () => {
   const [districts, setDistricts] = useState([]);
   const [upazilas, setUpazilas] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
+  const axiosSecure = useAxios();
   const {
     register,
     handleSubmit,
@@ -35,6 +38,18 @@ const CreateDonationRequest = () => {
     fetchData();
   }, []);
 
+  // Find the selected district object
+  const selectedDistrictObj = districts.find(
+    (d) => d.name === selectedDistrict
+  );
+
+  // Filter upazilas based on the selected district's ID
+  const filteredUpazilas = selectedDistrictObj
+    ? upazilas.filter(
+        (upazila) => upazila.district_id === selectedDistrictObj.id
+      )
+    : [];
+
   const loggedInUser = {
     name: user?.displayName,
     email: user?.email,
@@ -43,7 +58,7 @@ const CreateDonationRequest = () => {
 
   const onSubmit = async (data) => {
     if (loggedInUser.isBlocked) {
-      alert("You are blocked from creating requests.");
+      toast.error("You are blocked from creating requests.");
       return;
     }
 
@@ -57,15 +72,17 @@ const CreateDonationRequest = () => {
         createdAt: new Date().toISOString(),
       };
 
-      // Replace with your actual API call
-      // await axios.post('/api/donation-requests', fullData);
-      console.log(fullData);
-
-      reset();
-      alert("Request submitted successfully!");
+      const response = await axiosSecure.post(
+        "/api/donation-requests",
+        fullData
+      );
+      if (response.status === 201) {
+        toast.success("Request submitted successfully!");
+        reset();
+      }
     } catch (error) {
       console.error("Error submitting request:", error);
-      alert("Failed to submit request. Please try again.");
+      toast.error("Failed to submit request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,13 +191,11 @@ const CreateDonationRequest = () => {
                 }`}
               >
                 <option value="">Select Upazila</option>
-                {upazilas
-                  .filter((u) => u.district_name === selectedDistrict)
-                  .map((u) => (
-                    <option key={u.id} value={u.name}>
-                      {u.name}
-                    </option>
-                  ))}
+                {filteredUpazilas.map((u) => (
+                  <option key={u.id} value={u.name}>
+                    {u.name}
+                  </option>
+                ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                 <MapPin className="h-5 w-5 text-gray-400" />
