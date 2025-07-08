@@ -1,5 +1,6 @@
-// src/pages/FundingPage.jsx
 import { useState } from "react";
+import GiveFundModal from "../../components/modal/GiveFundModal";
+import FundingTable from "../../components/Funding/FundingTable";
 
 const FundingPage = () => {
   const dummyFunds = [
@@ -36,8 +37,16 @@ const FundingPage = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <GiveFundModal onFundSubmit={handleFundSubmit} />
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="funding-modal-title"
+        >
+          <GiveFundModal
+            onFundSubmit={handleFundSubmit}
+            onClose={() => setShowModal(false)} // pass close handler
+          />
         </div>
       )}
 

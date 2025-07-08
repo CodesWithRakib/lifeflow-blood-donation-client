@@ -5,7 +5,6 @@ import Register from "../pages/registration/Register";
 import Error from "../pages/error/Error";
 import Login from "../pages/login/LogIn";
 import SearchPage from "../pages/search/SearchPage";
-import FundingPage from "../pages/Funding/FundingPage";
 import PrivateRoute from "../auth/PrivateRoute";
 import DonationRequests from "../pages/Donation/DonationRequests";
 import AboutUs from "../pages/about/AboutUs";
@@ -18,6 +17,10 @@ import Profile from "../pages/Dashboard/Profile";
 import ContactUs from "../pages/home/ContactUs";
 import Blogs from "../pages/Blogs/Blogs";
 import AdminRoute from "../auth/AdminRoute";
+import FundingPage from "../pages/Funding/FundingPage";
+import DashboardHome from "../pages/Dashboard/DashboardHome";
+import MyDonationRequests from "../pages/Dashboard/MydonationRequests";
+import CreateDonationRequest from "../components/form/CreateDonationRequest";
 
 export const router = createBrowserRouter([
   {
@@ -84,12 +87,29 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Profile />,
+            element: <DashboardHome />,
           },
           {
             path: "profile",
             element: <Profile />,
           },
+          {
+            path: "create-donation-request",
+            element: (
+              <PrivateRoute>
+                <CreateDonationRequest />
+              </PrivateRoute>
+            ),
+          },
+          {
+            path: "my-donation-requests",
+            element: (
+              <PrivateRoute>
+                <MyDonationRequests />
+              </PrivateRoute>
+            ),
+          },
+          {},
         ],
       },
       // Admin routes
