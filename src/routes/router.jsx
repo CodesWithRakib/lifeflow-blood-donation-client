@@ -4,6 +4,7 @@ import Home from "../pages/home/Home";
 import Register from "../pages/registration/Register";
 import Error from "../pages/error/Error";
 import Login from "../pages/login/LogIn";
+import SearchPage from "../pages/search/SearchPage";
 
 export const router = createBrowserRouter([
   {
@@ -13,6 +14,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "/search",
+        element: <SearchPage />,
       },
     ],
   },
