@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import uploadImageToImageBB from "../../utils/imageUpload";
 import useAxios from "../../hooks/useAxios";
@@ -30,7 +30,7 @@ const RegisterForm = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState("idle");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +51,8 @@ const RegisterForm = () => {
 
   const onSubmit = async (data) => {
     try {
+      setRegistrationStatus("registering");
+
       const imageFile = data.avatar[0];
       const imageUrl = await uploadImageToImageBB(imageFile);
 
@@ -65,8 +67,6 @@ const RegisterForm = () => {
         status: "active",
       };
 
-      setIsSigningUp(true);
-
       const userCredential = await createUser(data.email, data.password);
       const user = userCredential.user;
       setUser(user);
@@ -76,21 +76,18 @@ const RegisterForm = () => {
         photoURL: imageUrl,
       });
 
-      toast.success("Account created & updated successfully!");
-
       await axiosSecure.post("/api/users", newUser);
 
-      reset();
-      toast.success("Redirecting...");
+      setRegistrationStatus("success");
+      toast.success("Account created successfully!");
 
       setTimeout(() => {
         navigate(state?.from || "/");
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to register user");
-    } finally {
-      setIsSigningUp(false);
+      setRegistrationStatus("idle");
+      toast.error(error.message || "Failed to register user");
     }
   };
 
@@ -393,16 +390,30 @@ const RegisterForm = () => {
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSigningUp}
-          className="w-full bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+          disabled={registrationStatus !== "idle"}
+          className={`w-full text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2
+            ${
+              registrationStatus === "idle"
+                ? "bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                : registrationStatus === "registering"
+                ? "bg-amber-700 dark:bg-amber-600"
+                : "bg-emerald-600 dark:bg-emerald-500"
+            }
+            disabled:opacity-90 disabled:cursor-not-allowed
+          `}
         >
-          {isSigningUp ? (
+          {registrationStatus === "idle" ? (
+            "Register Now"
+          ) : registrationStatus === "registering" ? (
             <>
-              <Loader2 className="animate-spin mr-2 h-4 w-4" />
+              <Loader2 className="animate-spin h-5 w-5" />
               Creating Account...
             </>
           ) : (
-            "Register Now"
+            <>
+              <CheckCircle className="h-5 w-5" />
+              Registration Successful!
+            </>
           )}
         </button>
 
