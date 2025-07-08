@@ -53,22 +53,28 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser && currentUser.email) {
-        axiosSecure
-          .post("/jwt", { email: currentUser.email }, { withCredentials: true })
-          .then(() => {
-            setLoading(false);
-          })
-          .catch(() => {
-            setLoading(false);
+
+      if (currentUser?.email) {
+        try {
+          const response = await axiosSecure.post("/jwt", {
+            email: currentUser.email,
           });
+          // Suppose your backend returns token in response.data.token
+          if (response.data?.token) {
+            localStorage.setItem("accessToken", response.data.token);
+          }
+        } catch (error) {
+          console.error("JWT issue:", error);
+          localStorage.removeItem("accessToken");
+        }
+      } else {
+        localStorage.removeItem("accessToken");
       }
+
       setLoading(false);
     });
 
-    return () => {
-      unsubscribe();
-    };
+    return () => unsubscribe();
   }, [axiosSecure]);
 
   const authData = {
