@@ -17,11 +17,11 @@ import Profile from "../pages/Dashboard/Profile";
 import ContactUs from "../pages/home/ContactUs";
 import Blogs from "../pages/Blogs/Blogs";
 import AdminRoute from "../auth/AdminRoute";
-import FundingPage from "../pages/Funding/FundingPage";
 import DashboardHome from "../pages/Dashboard/DashboardHome";
 import MyDonationRequests from "../pages/Dashboard/MydonationRequests";
 import CreateDonationRequest from "../components/form/CreateDonationRequest";
 import DonationRequestDetails from "../pages/Donation/DonationRequestDetails";
+import Funding from "../pages/Funding/Funding";
 
 export const router = createBrowserRouter([
   {
@@ -41,7 +41,7 @@ export const router = createBrowserRouter([
         path: "funding",
         element: (
           <PrivateRoute>
-            <FundingPage />
+            <Funding />
           </PrivateRoute>
         ),
       },

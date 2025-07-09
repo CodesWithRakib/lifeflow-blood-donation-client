@@ -16,13 +16,13 @@ const FundingTable = ({ funds }) => {
               className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
               <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-100">
-                {fund.name}
+                {fund.userName}
               </td>
               <td className="px-6 py-4 text-amber-600 dark:text-amber-400 font-semibold">
                 ৳ {fund.amount}
               </td>
               <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                {fund.date}
+                {fund.createdAt}
               </td>
             </tr>
           ))}
