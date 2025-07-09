@@ -14,7 +14,7 @@ const BlogCard = ({ blog }) => {
       <div className="flex justify-between items-center mt-4">
         <span className="text-xs text-gray-500">{blog.author}</span>
         <Link
-          to={`/blogs/${blog.id}`}
+          to={`/blogs/${blog._id}`}
           className="text-amber-500 hover:underline text-sm"
         >
           Read More →

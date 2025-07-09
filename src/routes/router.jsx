@@ -26,6 +26,7 @@ import AllUsers from "../pages/Dashboard/users/AllUsers";
 import ContentManagement from "../pages/Dashboard/ContentManagement";
 import AddBlog from "../pages/Dashboard/AddBlog";
 import EditBlog from "../pages/Dashboard/EditBlog"; // Assuming you create this component
+import BlogDetails from "../pages/Blogs/BlogDetails";
 
 export const router = createBrowserRouter([
   {
@@ -60,6 +61,7 @@ export const router = createBrowserRouter([
         ),
       },
       { path: "blog", element: <Blogs /> },
+      { path: "blogs/:id", element: <BlogDetails /> },
       { path: "contact", element: <ContactUs /> },
       { path: "about", element: <AboutUs /> },
       { path: "faq", element: <FAQ /> },

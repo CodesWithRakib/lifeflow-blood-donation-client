@@ -96,9 +96,19 @@ const Blogs = () => {
                 <BlogCard
                   key={blog._id}
                   blog={blog}
-                  onClick={() => {
-                    // Track views when a blog is clicked
-                    axiosSecure.patch(`/api/blogs/${blog._id}/views`);
+                  onClick={async () => {
+                    try {
+                      await axiosSecure.patch(`/api/blogs/${blog._id}/views`);
+                      // Optionally update local state if you want immediate UI feedback
+                      setBlogs((prevBlogs) =>
+                        prevBlogs.map((b) =>
+                          b._id === blog._id ? { ...b, views: b.views + 1 } : b
+                        )
+                      );
+                    } catch (error) {
+                      console.error("Failed to track view:", error);
+                      // You might want to add user feedback here
+                    }
                   }}
                 />
               ))
