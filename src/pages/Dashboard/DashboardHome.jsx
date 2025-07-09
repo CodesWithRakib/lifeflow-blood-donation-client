@@ -4,8 +4,11 @@ import { Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-react";
 
 const DashboardHome = () => {
   const [recentRequests, setRecentRequests] = useState([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [requestToDelete, setRequestToDelete] = useState(null);
 
   useEffect(() => {
+    // This would typically come from an API call
     const dummyData = [
       {
         id: 1,
@@ -42,6 +45,21 @@ const DashboardHome = () => {
     setRecentRequests(dummyData);
   }, []);
 
+  const handleStatusChange = (id, newStatus) => {
+    setRecentRequests((prevRequests) =>
+      prevRequests.map((request) =>
+        request.id === id ? { ...request, status: newStatus } : request
+      )
+    );
+  };
+
+  const handleDeleteRequest = (id) => {
+    setRecentRequests((prevRequests) =>
+      prevRequests.filter((request) => request.id !== id)
+    );
+    setShowDeleteModal(false);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       {/* Welcome Section */}
@@ -77,7 +95,7 @@ const DashboardHome = () => {
                 </tr>
               </thead>
               <tbody>
-                {recentRequests.map((req) => (
+                {recentRequests.slice(0, 3).map((req) => (
                   <tr
                     key={req.id}
                     className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -91,14 +109,29 @@ const DashboardHome = () => {
                     <td className="px-4 py-2 font-semibold text-amber-600">
                       {req.bloodGroup}
                     </td>
-                    <td className="px-4 py-2 capitalize">{req.status}</td>
+                    <td className="px-4 py-2 capitalize">
+                      {req.status}
+                      {req.status === "inprogress" && req.donor && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Donor: {req.donor.name} ({req.donor.email})
+                        </div>
+                      )}
+                    </td>
                     <td className="px-4 py-2 flex flex-wrap gap-2">
                       {req.status === "inprogress" && (
                         <>
-                          <button className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs flex items-center gap-1">
+                          <button
+                            onClick={() => handleStatusChange(req.id, "done")}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs flex items-center gap-1"
+                          >
                             <CheckCircle className="w-4 h-4" /> Done
                           </button>
-                          <button className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs flex items-center gap-1">
+                          <button
+                            onClick={() =>
+                              handleStatusChange(req.id, "canceled")
+                            }
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs flex items-center gap-1"
+                          >
                             <XCircle className="w-4 h-4" /> Cancel
                           </button>
                         </>
@@ -108,7 +141,13 @@ const DashboardHome = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                       </Link>
-                      <button className="border border-gray-300 dark:border-gray-600 px-2 py-1 rounded text-xs flex items-center gap-1 hover:text-red-500">
+                      <button
+                        onClick={() => {
+                          setRequestToDelete(req.id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="border border-gray-300 dark:border-gray-600 px-2 py-1 rounded text-xs flex items-center gap-1 hover:text-red-500"
+                      >
                         <Trash className="w-4 h-4" />
                       </button>
                       <Link to={`/dashboard/donation-details/${req.id}`}>
@@ -133,7 +172,36 @@ const DashboardHome = () => {
         </div>
       ) : (
         <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
-          You haven’t made any donation requests yet.
+          You haven't made any donation requests yet.
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to delete this donation request? This action
+              cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteRequest(requestToDelete)}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

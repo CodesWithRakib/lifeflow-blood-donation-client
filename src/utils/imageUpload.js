@@ -1,16 +1,14 @@
+import axios from "axios";
+
 const uploadImageToImageBB = async (imageFile) => {
   const formData = new FormData();
   formData.append("image", imageFile);
 
-  const res = await fetch(
+  const { data } = await axios.post(
     `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`,
-    {
-      method: "POST",
-      body: formData,
-    }
+    formData
   );
 
-  const data = await res.json();
   if (data.success) {
     return data.data.url;
   } else {
