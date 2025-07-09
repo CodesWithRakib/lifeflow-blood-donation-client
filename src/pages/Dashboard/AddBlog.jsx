@@ -7,9 +7,11 @@ import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import useAxios from "../../hooks/useAxios";
 import uploadImageToImageBB from "../../utils/imageUpload";
+import useAuth from "../../hooks/useAuth";
 
 const AddBlog = () => {
   const axiosSecure = useAxios();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const editor = useRef(null);
   const isAdmin = true;
@@ -74,11 +76,22 @@ const AddBlog = () => {
 
       // Submit blog data
       const newBlog = {
+        authorId: user.uid,
         title: data.title.trim(),
+        author: user.displayName,
+        authorEmail: user.email,
         thumbnail: imageUrl,
         content: data.content,
         status: "draft",
-        createdAt: new Date().toISOString(),
+        views: 0,
+        comments: [],
+        likes: [],
+        dislikes: [],
+        shares: [],
+        tags: [],
+        categories: [],
+        slug: data.title.replace(/\s+/g, "-").toLowerCase(),
+        date: new Date().toISOString(),
       };
 
       const response = await axiosSecure.post("api/blogs", newBlog);
