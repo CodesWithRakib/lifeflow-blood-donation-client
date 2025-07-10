@@ -22,10 +22,14 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden">
+    <div
+      className={`flex h-screen bg-gray-100 dark:bg-gray-900 ${
+        sidebarOpen ? "overflow-hidden" : "overflow-auto"
+      }`}
+    >
       {/* Sidebar */}
       <aside
-        className={`fixed md:static z-40 inset-y-0 left-0 transform w-64 bg-white dark:bg-gray-800 shadow-md transition-transform duration-300 ease-in-out ${
+        className={`fixed md:static z-40 inset-y-0 left-0 transform w-64 bg-white dark:bg-gray-800 shadow-md transition-transform duration-300 ease-in-out overflow-y-auto ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
@@ -33,12 +37,13 @@ const Dashboard = () => {
           <h2 className="text-xl font-bold text-amber-600">Donorly</h2>
           <button
             className="md:hidden text-gray-700 dark:text-gray-300"
+            aria-label="Close sidebar"
             onClick={() => setSidebarOpen(false)}
           >
             <X size={24} />
           </button>
         </div>
-        <nav className="px-4 py-6 space-y-2">
+        <nav className="px-4 py-6 space-y-2" aria-label="Dashboard Navigation">
           {links.map(({ to, label, icon }) => (
             <NavLink
               key={to}
@@ -65,16 +70,18 @@ const Dashboard = () => {
         <div
           className="fixed inset-0 bg-black bg-opacity-30 z-30 md:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-auto">
+      <div className="flex-1 flex flex-col min-h-0">
         {/* TopBar on small screen */}
         <header className="md:hidden bg-white dark:bg-gray-800 px-4 py-3 shadow-sm flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-gray-700 dark:text-gray-300 hover:text-amber-600"
+            aria-label="Open sidebar"
           >
             <Menu size={24} />
           </button>
@@ -83,7 +90,7 @@ const Dashboard = () => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 md:p-6 overflow-auto">
+        <main className="p-4 md:p-6 overflow-auto flex-1 min-h-0">
           <Outlet />
         </main>
       </div>

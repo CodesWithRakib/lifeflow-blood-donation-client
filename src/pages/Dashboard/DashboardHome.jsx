@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Eye, Edit, Trash, CheckCircle, XCircle } from "lucide-react";
+import { useUser } from "../../hooks/useUser";
 
 const DashboardHome = () => {
   const [recentRequests, setRecentRequests] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState(null);
+  const user = useUser();
+  console.log(user);
 
   useEffect(() => {
     // This would typically come from an API call
@@ -44,6 +47,22 @@ const DashboardHome = () => {
     ];
     setRecentRequests(dummyData);
   }, []);
+
+  // Helper to nicely format statuses
+  const formatStatus = (status) => {
+    switch (status) {
+      case "inprogress":
+        return "In Progress";
+      case "pending":
+        return "Pending";
+      case "done":
+        return "Done";
+      case "canceled":
+        return "Canceled";
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+  };
 
   const handleStatusChange = (id, newStatus) => {
     setRecentRequests((prevRequests) =>
@@ -110,7 +129,7 @@ const DashboardHome = () => {
                       {req.bloodGroup}
                     </td>
                     <td className="px-4 py-2 capitalize">
-                      {req.status}
+                      {formatStatus(req.status)}
                       {req.status === "inprogress" && req.donor && (
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           Donor: {req.donor.name} ({req.donor.email})
@@ -178,7 +197,11 @@ const DashboardHome = () => {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">
               Confirm Deletion
@@ -191,12 +214,14 @@ const DashboardHome = () => {
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                aria-label="Cancel delete"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDeleteRequest(requestToDelete)}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+                aria-label="Confirm delete"
               >
                 Delete
               </button>
