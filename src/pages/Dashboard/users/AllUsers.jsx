@@ -1,123 +1,59 @@
-import { useState, useEffect } from 'react';
-import { MoreVertical, User, Mail, Shield, Lock, Unlock, UserPlus, Star } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  MoreVertical,
+  User,
+  Mail,
+  Shield,
+  Lock,
+  Unlock,
+  UserPlus,
+  Star,
+} from "lucide-react";
+import { toast } from "react-hot-toast";
+import Swal from "sweetalert2";
+import useAxios from "../../../hooks/useAxios";
 
 const AllUsers = () => {
-  // Sample user data
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      avatar: '',
-      role: 'donor',
-      status: 'active',
-      lastActive: '2023-05-15'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      avatar: '',
-      role: 'volunteer',
-      status: 'active',
-      lastActive: '2023-05-14'
-    },
-    {
-      id: 3,
-      name: 'Admin User',
-      email: 'admin@example.com',
-      avatar: '',
-      role: 'admin',
-      status: 'active',
-      lastActive: '2023-05-10'
-    },
-    {
-      id: 4,
-      name: 'Blocked User',
-      email: 'blocked@example.com',
-      avatar: '',
-      role: 'donor',
-      status: 'blocked',
-      lastActive: '2023-04-20'
-    },
-    {
-      id: 5,
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      avatar: '',
-      role: 'donor',
-      status: 'active',
-      lastActive: '2023-05-12'
-    },
-    {
-      id: 6,
-      name: 'Michael Brown',
-      email: 'michael@example.com',
-      avatar: '',
-      role: 'volunteer',
-      status: 'blocked',
-      lastActive: '2023-03-30'
-    },
-    {
-      id: 7,
-      name: 'Emily Davis',
-      email: 'emily@example.com',
-      avatar: '',
-      role: 'donor',
-      status: 'active',
-      lastActive: '2023-05-13'
-    },
-    {
-      id: 8,
-      name: 'David Wilson',
-      email: 'david@example.com',
-      avatar: '',
-      role: 'volunteer',
-      status: 'active',
-      lastActive: '2023-05-11'
-    },
-    {
-      id: 9,
-      name: 'Lisa Miller',
-      email: 'lisa@example.com',
-      avatar: '',
-      role: 'donor',
-      status: 'active',
-      lastActive: '2023-05-09'
-    },
-    {
-      id: 10,
-      name: 'Robert Taylor',
-      email: 'robert@example.com',
-      avatar: '',
-      role: 'admin',
-      status: 'active',
-      lastActive: '2023-05-08'
-    },
-  ]);
-
-  // State for pagination and filtering
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState("all");
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  const axiosSecure = useAxios();
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const res = await axiosSecure.get("/api/users");
+        setUsers(res.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [axiosSecure]);
 
   // Filter users based on status
-  const filteredUsers = users.filter(user => {
-    if (statusFilter === 'all') return true;
+  const filteredUsers = users.filter((user) => {
+    if (statusFilter === "all") return true;
     return user.status === statusFilter;
   });
 
-  // Get current users for pagination
+  // Pagination logic
   const indexOfLastUser = currentPage * itemsPerPage;
   const indexOfFirstUser = indexOfLastUser - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Toggle dropdown
   const toggleDropdown = (userId) => {
     setDropdownOpen(dropdownOpen === userId ? null : userId);
   };
@@ -129,52 +65,110 @@ const AllUsers = () => {
         setDropdownOpen(null);
       }
     };
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [dropdownOpen]);
 
   // User action handlers
-  const handleBlockUser = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, status: 'blocked' } : user
-    ));
+  const updateUserStatus = async (userId, status) => {
+    try {
+      const res = await axiosSecure.patch(`/api/users/${userId}/status`, {
+        status,
+      });
+      setUsers(
+        users.map((user) => (user._id === userId ? { ...user, status } : user))
+      );
+      toast.success(res.data.message);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to update user status"
+      );
+    }
     setDropdownOpen(null);
   };
 
-  const handleUnblockUser = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, status: 'active' } : user
-    ));
+  const updateUserRole = async (userId, role) => {
+    try {
+      const res = await axiosSecure.patch(`/api/users/${userId}/role`, {
+        role,
+      });
+      setUsers(
+        users.map((user) => (user._id === userId ? { ...user, role } : user))
+      );
+      toast.success(res.data.message);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to update user role"
+      );
+    }
     setDropdownOpen(null);
   };
 
-  const handleMakeVolunteer = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, role: 'volunteer' } : user
-    ));
-    setDropdownOpen(null);
-  };
+  const handleDeleteUser = async (userId) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      customClass: {
+        popup: "dark:bg-gray-800 dark:text-white",
+        title: "dark:text-white",
+        content: "dark:text-gray-300",
+        confirmButton: "hover:bg-red-700 transition-colors",
+        cancelButton: "hover:bg-blue-600 transition-colors",
+      },
+      background: "#ffffff dark:bg-gray-800",
+    });
 
-  const handleMakeAdmin = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, role: 'admin' } : user
-    ));
-    setDropdownOpen(null);
+    if (result.isConfirmed) {
+      try {
+        const res = await axiosSecure.delete(`/api/users/${userId}`);
+        setUsers(users.filter((user) => user._id !== userId));
+        Swal.fire({
+          title: "Deleted!",
+          text: res.data.message,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+          customClass: {
+            popup: "dark:bg-gray-800 dark:text-white",
+          },
+        });
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        toast.error(error.response?.data?.message || "Failed to delete user");
+      }
+    }
   };
 
   // Get role icon and color
   const getRoleIcon = (role) => {
     switch (role) {
-      case 'admin':
-        return <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
-      case 'volunteer':
+      case "admin":
+        return (
+          <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+        );
+      case "volunteer":
         return <Star className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
       default:
         return <User className="w-4 h-4 text-green-600 dark:text-green-400" />;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -182,11 +176,14 @@ const AllUsers = () => {
         {/* Header with title and filter */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-            Manage Users
+            Manage Users ({users.length})
           </h2>
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
-              <label htmlFor="status-filter" className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="status-filter"
+                className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Status:
               </label>
               <select
@@ -195,7 +192,7 @@ const AllUsers = () => {
                 value={statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value);
-                  setCurrentPage(1); // Reset to first page when filter changes
+                  setCurrentPage(1);
                 }}
               >
                 <option value="all">All</option>
@@ -211,22 +208,40 @@ const AllUsers = () => {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   User
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   Email
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   Role
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   Last Active
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                >
                   Actions
                 </th>
               </tr>
@@ -234,12 +249,19 @@ const AllUsers = () => {
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {currentUsers.length > 0 ? (
                 currentUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <tr
+                    key={user._id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
                           {user.avatar ? (
-                            <img className="h-10 w-10 rounded-full" src={user.avatar} alt="" />
+                            <img
+                              className="h-10 w-10 rounded-full"
+                              src={user.avatar}
+                              alt={user.name}
+                            />
                           ) : (
                             <User className="h-5 w-5 text-gray-400" />
                           )}
@@ -268,16 +290,18 @@ const AllUsers = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.status === 'active'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                      }`}>
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          user.status === "active"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                        }`}
+                      >
                         {user.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.lastActive}
+                      {new Date(user.updatedAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="relative inline-block text-left">
@@ -286,18 +310,24 @@ const AllUsers = () => {
                           className="inline-flex justify-center items-center p-2 rounded-md text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleDropdown(user.id);
+                            toggleDropdown(user._id);
                           }}
                         >
                           <MoreVertical className="h-5 w-5" />
                         </button>
 
-                        {dropdownOpen === user.id && (
+                        {dropdownOpen === user._id && (
                           <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
-                            <div className="py-1" role="menu" aria-orientation="vertical">
-                              {user.status === 'active' ? (
+                            <div
+                              className="py-1"
+                              role="menu"
+                              aria-orientation="vertical"
+                            >
+                              {user.status === "active" ? (
                                 <button
-                                  onClick={() => handleBlockUser(user.id)}
+                                  onClick={() =>
+                                    updateUserStatus(user._id, "blocked")
+                                  }
                                   className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                                   role="menuitem"
                                 >
@@ -306,7 +336,9 @@ const AllUsers = () => {
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => handleUnblockUser(user.id)}
+                                  onClick={() =>
+                                    updateUserStatus(user._id, "active")
+                                  }
                                   className="flex items-center px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                                   role="menuitem"
                                 >
@@ -314,19 +346,24 @@ const AllUsers = () => {
                                   Unblock User
                                 </button>
                               )}
-                              {user.role !== 'volunteer' && user.role !== 'admin' && (
+                              {user.role !== "volunteer" &&
+                                user.role !== "admin" && (
+                                  <button
+                                    onClick={() =>
+                                      updateUserRole(user._id, "volunteer")
+                                    }
+                                    className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                                    role="menuitem"
+                                  >
+                                    <Star className="mr-3 h-5 w-5" />
+                                    Make Volunteer
+                                  </button>
+                                )}
+                              {user.role !== "admin" && (
                                 <button
-                                  onClick={() => handleMakeVolunteer(user.id)}
-                                  className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
-                                  role="menuitem"
-                                >
-                                  <Star className="mr-3 h-5 w-5" />
-                                  Make Volunteer
-                                </button>
-                              )}
-                              {user.role !== 'admin' && (
-                                <button
-                                  onClick={() => handleMakeAdmin(user.id)}
+                                  onClick={() =>
+                                    updateUserRole(user._id, "admin")
+                                  }
                                   className="flex items-center px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                                   role="menuitem"
                                 >
@@ -334,6 +371,14 @@ const AllUsers = () => {
                                   Make Admin
                                 </button>
                               )}
+                              <button
+                                onClick={() => handleDeleteUser(user._id)}
+                                className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                                role="menuitem"
+                              >
+                                <Trash className="mr-3 h-5 w-5" />
+                                Delete User
+                              </button>
                             </div>
                           </div>
                         )}
@@ -343,7 +388,10 @@ const AllUsers = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan="6"
+                    className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                  >
                     No users found matching your criteria
                   </td>
                 </tr>
@@ -364,7 +412,11 @@ const AllUsers = () => {
                 Previous
               </button>
               <button
-                onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                onClick={() =>
+                  paginate(
+                    currentPage < totalPages ? currentPage + 1 : totalPages
+                  )
+                }
                 disabled={currentPage === totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
@@ -374,61 +426,72 @@ const AllUsers = () => {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing <span className="font-medium">{indexOfFirstUser + 1}</span> to{' '}
+                  Showing{" "}
+                  <span className="font-medium">{indexOfFirstUser + 1}</span> to{" "}
                   <span className="font-medium">
-                    {indexOfLastUser > filteredUsers.length ? filteredUsers.length : indexOfLastUser}
-                  </span>{' '}
-                  of <span className="font-medium">{filteredUsers.length}</span> users
+                    {indexOfLastUser > filteredUsers.length
+                      ? filteredUsers.length
+                      : indexOfLastUser}
+                  </span>{" "}
+                  of <span className="font-medium">{filteredUsers.length}</span>{" "}
+                  users
                 </p>
               </div>
               <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <nav
+                  className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                  aria-label="Pagination"
+                >
                   <button
                     onClick={() => paginate(1)}
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-600 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                   >
-                    <span className="sr-only">First</span>
-                    «
+                    <span className="sr-only">First</span>«
                   </button>
                   <button
-                    onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
+                    onClick={() =>
+                      paginate(currentPage > 1 ? currentPage - 1 : 1)
+                    }
                     disabled={currentPage === 1}
                     className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-600 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                   >
-                    <span className="sr-only">Previous</span>
-                    ‹
+                    <span className="sr-only">Previous</span>‹
                   </button>
 
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === number
-                          ? 'z-10 bg-amber-50 dark:bg-amber-900 border-amber-500 text-amber-600 dark:text-amber-300'
-                          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === number
+                            ? "z-10 bg-amber-50 dark:bg-amber-900 border-amber-500 text-amber-600 dark:text-amber-300"
+                            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    )
+                  )}
 
                   <button
-                    onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
+                    onClick={() =>
+                      paginate(
+                        currentPage < totalPages ? currentPage + 1 : totalPages
+                      )
+                    }
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-600 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                   >
-                    <span className="sr-only">Next</span>
-                    ›
+                    <span className="sr-only">Next</span>›
                   </button>
                   <button
                     onClick={() => paginate(totalPages)}
                     disabled={currentPage === totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-600 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                   >
-                    <span className="sr-only">Last</span>
-                    »
+                    <span className="sr-only">Last</span>»
                   </button>
                 </nav>
               </div>

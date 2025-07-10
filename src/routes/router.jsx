@@ -11,7 +11,6 @@ import AboutUs from "../pages/about/AboutUs";
 import FAQ from "../pages/Faq/FAQ";
 import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsOfService from "../pages/Terms/TermsOfService";
-import Dashboard from "../layouts/Dashboard";
 import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard";
 import Profile from "../pages/Dashboard/Profile";
 import ContactUs from "../pages/home/ContactUs";
@@ -25,8 +24,9 @@ import Funding from "../pages/Funding/Funding";
 import AllUsers from "../pages/Dashboard/users/AllUsers";
 import ContentManagement from "../pages/Dashboard/ContentManagement";
 import AddBlog from "../pages/Dashboard/AddBlog";
-import EditBlog from "../pages/Dashboard/EditBlog"; // Assuming you create this component
+import EditBlog from "../pages/Dashboard/EditBlog";
 import BlogDetails from "../pages/Blogs/BlogDetails";
+import Dashboard from "../layouts/Dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -36,6 +36,17 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "search", element: <SearchPage /> },
+      { path: "blog", element: <Blogs /> },
+      { path: "blogs/:id", element: <BlogDetails /> },
+      { path: "contact", element: <ContactUs /> },
+      { path: "about", element: <AboutUs /> },
+      { path: "faq", element: <FAQ /> },
+      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "terms", element: <TermsOfService /> },
+      { path: "register", element: <Register /> },
+      { path: "login", element: <Login /> },
+
+      // Protected routes that don't use Dashboard layout
       {
         path: "funding",
         element: (
@@ -60,92 +71,67 @@ export const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-      { path: "blog", element: <Blogs /> },
-      { path: "blogs/:id", element: <BlogDetails /> },
-      { path: "contact", element: <ContactUs /> },
-      { path: "about", element: <AboutUs /> },
-      { path: "faq", element: <FAQ /> },
-      { path: "privacy", element: <PrivacyPolicy /> },
-      { path: "terms", element: <TermsOfService /> },
+    ],
+  },
 
-      // Dashboard (User) Routes
+  // Dashboard routes with separate layout
+  {
+    path: "/dashboard",
+    element: (
+      <PrivateRoute>
+        <Dashboard />
+      </PrivateRoute>
+    ),
+    children: [
+      { index: true, element: <DashboardHome /> },
+      { path: "profile", element: <Profile /> },
+      { path: "my-donation-requests", element: <MyDonationRequests /> },
+      { path: "create-donation-request", element: <CreateDonationRequest /> },
+
+      // Admin-only routes
       {
-        path: "dashboard",
+        path: "all-users",
         element: (
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
+          <AdminRoute>
+            <AllUsers />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "all-blood-donation-request",
+        element: (
+          <AdminRoute>
+            <DonationRequests />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "content-management",
+        element: (
+          <AdminRoute>
+            <ContentManagement />
+          </AdminRoute>
         ),
         children: [
-          { index: true, element: <DashboardHome /> },
-          { path: "profile", element: <Profile /> },
-          { path: "my-donation-requests", element: <MyDonationRequests /> },
-          {
-            path: "create-donation-request",
-            element: <CreateDonationRequest />,
-          },
-
-          // Admin-only routes inside dashboard wrapped with AdminRoute
-          {
-            path: "all-users",
-            element: (
-              <AdminRoute>
-                <AllUsers />
-              </AdminRoute>
-            ),
-          },
-          {
-            path: "all-blood-donation-request",
-            element: (
-              <AdminRoute>
-                <DonationRequests />
-              </AdminRoute>
-            ),
-          },
-          {
-            path: "content-management",
-            element: (
-              <AdminRoute>
-                <ContentManagement />
-              </AdminRoute>
-            ),
-          },
-          {
-            path: "content-management/add-blog",
-            element: (
-              <AdminRoute>
-                <AddBlog />
-              </AdminRoute>
-            ),
-          },
-          {
-            path: "content-management/edit-blog/:id",
-            element: (
-              <AdminRoute>
-                <EditBlog />
-              </AdminRoute>
-            ),
-          },
+          { index: true, element: <ContentManagement /> },
+          { path: "add-blog", element: <AddBlog /> },
+          { path: "edit-blog/:id", element: <EditBlog /> },
         ],
-      },
-
-      // Admin dashboard route
-      {
-        path: "admin",
-        element: (
-          <PrivateRoute>
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          </PrivateRoute>
-        ),
       },
     ],
   },
 
-  // Auth routes (no layout)
-  { path: "register", element: <Register /> },
-  { path: "login", element: <Login /> },
+  // Separate admin dashboard route (if needed)
+  {
+    path: "/admin",
+    element: (
+      <PrivateRoute>
+        <AdminRoute>
+          <AdminDashboard />
+        </AdminRoute>
+      </PrivateRoute>
+    ),
+  },
 
   // Catch-all error route
   { path: "*", element: <Error /> },
