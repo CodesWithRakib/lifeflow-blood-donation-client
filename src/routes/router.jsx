@@ -27,6 +27,8 @@ import AddBlog from "../pages/Dashboard/AddBlog";
 import EditBlog from "../pages/Dashboard/EditBlog";
 import BlogDetails from "../pages/Blogs/BlogDetails";
 import Dashboard from "../layouts/Dashboard";
+import EditDonationRequest from "../components/form/EditDonationRequest";
+import BlogPreview from "../pages/Blogs/BlogPreview";
 
 export const router = createBrowserRouter([
   {
@@ -86,8 +88,19 @@ export const router = createBrowserRouter([
       { index: true, element: <DashboardHome /> },
       { path: "profile", element: <Profile /> },
       { path: "my-donation-requests", element: <MyDonationRequests /> },
+      { path: "edit-donation/:id", element: <EditDonationRequest /> },
+      { path: "donation-details/:id", element: <DonationRequestDetails /> },
       { path: "create-donation-request", element: <CreateDonationRequest /> },
-
+      {
+        path: "content-management",
+        element: <ContentManagement />,
+      },
+      { path: "content-management/add-blog", element: <AddBlog /> },
+      { path: "content-management/edit-blog/:id", element: <EditBlog /> },
+      {
+        path: "content-management/blog-preview/:id",
+        element: <BlogPreview />,
+      },
       // Admin-only routes
       {
         path: "all-users",
@@ -104,19 +117,6 @@ export const router = createBrowserRouter([
             <DonationRequests />
           </AdminRoute>
         ),
-      },
-      {
-        path: "content-management",
-        element: (
-          <AdminRoute>
-            <ContentManagement />
-          </AdminRoute>
-        ),
-        children: [
-          { index: true, element: <ContentManagement /> },
-          { path: "add-blog", element: <AddBlog /> },
-          { path: "edit-blog/:id", element: <EditBlog /> },
-        ],
       },
     ],
   },

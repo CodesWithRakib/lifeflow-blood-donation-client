@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
-import uploadImageToImageBB from "../../utils/imageUpload";
+// import uploadImageToImageBB from "../../utils/imageUpload";
 import useAxios from "../../hooks/useAxios";
 import { useLocation, useNavigate } from "react-router";
 import useTitle from "../../hooks/useTitle";
 import axios from "axios";
+import uploadImageToCloudinary from "../../utils/uploadImageToCloudinary";
 
 const RegisterForm = () => {
   const { createUser, updateUser, setUser } = useAuth();
@@ -54,9 +55,10 @@ const RegisterForm = () => {
       setRegistrationStatus("registering");
 
       const imageFile = data.avatar[0];
-      const imageUrl = await uploadImageToImageBB(imageFile);
+      // const imageUrl = await uploadImageToImageBB(imageFile);
+      const imageUrl = await uploadImageToCloudinary(imageFile);
 
-      const newUser = {
+      let newUser = {
         email: data.email,
         name: data.name,
         avatar: imageUrl,
@@ -70,7 +72,7 @@ const RegisterForm = () => {
       const userCredential = await createUser(data.email, data.password);
       const user = userCredential.user;
       setUser(user);
-
+      newUser.firebaseUid = user.uid;
       await updateUser({
         displayName: data.name,
         photoURL: imageUrl,

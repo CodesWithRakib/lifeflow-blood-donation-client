@@ -8,6 +8,7 @@ import {
   Unlock,
   UserPlus,
   Star,
+  Trash,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Swal from "sweetalert2";
@@ -74,7 +75,7 @@ const AllUsers = () => {
   // User action handlers
   const updateUserStatus = async (userId, status) => {
     try {
-      const res = await axiosSecure.patch(`/api/users/${userId}/status`, {
+      const res = await axiosSecure.patch(`/api/users/status/${userId}`, {
         status,
       });
       setUsers(
@@ -92,7 +93,7 @@ const AllUsers = () => {
 
   const updateUserRole = async (userId, role) => {
     try {
-      const res = await axiosSecure.patch(`/api/users/${userId}/role`, {
+      const res = await axiosSecure.patch(`/api/users/role/${userId}`, {
         role,
       });
       setUsers(

@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import useAxios from "../../hooks/useAxios";
 import useAuth from "../../hooks/useAuth";
 import uploadImageToImageBB from "../../utils/imageUpload";
+import { useQuery } from "@tanstack/react-query";
 
 const Profile = () => {
   const { user: authUser, updateUser } = useAuth();
@@ -26,16 +27,18 @@ const Profile = () => {
     bloodGroup: "",
   });
 
+  const { data: userData, refetch } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/api/user`);
+      return data.data;
+    },
+  });
+
   // Fetch user data and location data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch user data
-        const userResponse = await axiosSecure.get(
-          `/api/users/${authUser.email}`
-        );
-        const userData = userResponse.data;
-
         // Fetch location data
         const [districtRes, upazilaRes] = await Promise.all([
           axios("/districts.json"),
@@ -61,7 +64,7 @@ const Profile = () => {
     };
 
     fetchData();
-  }, [authUser, axiosSecure]);
+  }, [authUser, userData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -121,6 +124,7 @@ const Profile = () => {
       }
 
       toast.success("Profile updated successfully!");
+      refetch();
       setEditMode(false);
     } catch (error) {
       console.error("Error updating profile:", error);

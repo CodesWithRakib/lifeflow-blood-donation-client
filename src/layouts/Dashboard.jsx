@@ -17,13 +17,19 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import useAxios from "../hooks/useAxios";
 import LoadingSpinner from "../components/LoadingSpinner";
+import useAuth from "../hooks/useAuth";
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const axiosSecure = useAxios();
+  const { logOut } = useAuth();
 
-  const { data: user, isLoading } = useQuery({
+  const {
+    data: user,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["user"],
     queryFn: async () => {
       const { data } = await axiosSecure.get("/api/user");
@@ -31,8 +37,6 @@ const Dashboard = () => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
-
-  console.log(user);
 
   useEffect(() => {
     const handleResize = () => {
@@ -102,12 +106,17 @@ const Dashboard = () => {
 
     return links;
   };
+  const handleLogout = () => {
+    logOut();
+    refetch();
+  };
 
   const links = getLinks();
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
+        {refetch()}
         <LoadingSpinner />
       </div>
     );
@@ -220,7 +229,10 @@ const Dashboard = () => {
                   <Settings size={18} />
                   <span>Settings</span>
                 </button>
-                <button className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
                   <LogOut size={18} />
                   <span>Logout</span>
                 </button>

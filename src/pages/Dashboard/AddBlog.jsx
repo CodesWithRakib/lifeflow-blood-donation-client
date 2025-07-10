@@ -1,5 +1,5 @@
 import { BookPlus, Edit, EyeOff, Save, Trash2, Upload } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router";
 import JoditEditor from "jodit-react";
 import { useForm, Controller } from "react-hook-form";
@@ -8,53 +8,83 @@ import Swal from "sweetalert2";
 import useAxios from "../../hooks/useAxios";
 import uploadImageToImageBB from "../../utils/imageUpload";
 import useAuth from "../../hooks/useAuth";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import EmptyState from "../../components/common/EmptyState";
 
 const AddBlog = () => {
   const axiosSecure = useAxios();
   const { user } = useAuth();
   const navigate = useNavigate();
   const editor = useRef(null);
-  const isAdmin = true;
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample blog data
-  const [blogs, setBlogs] = useState([
-    {
-      id: 1,
-      title: "Blood Donation Benefits",
-      thumbnail: "https://i.ibb.co/0jQ2ZzN/blood-donation.jpg",
-      content: "<p>Learn about blood donation benefits...</p>",
-      status: "published",
-      createdAt: "2023-05-15",
-    },
-  ]);
-
+  // State management
+  const [blogs, setBlogs] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewImage, setPreviewImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [contentValidationError, setContentValidationError] = useState(false);
 
+  // Form setup
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { isDirty },
+    watch,
+    formState: { isDirty, errors },
   } = useForm({
     defaultValues: {
       title: "",
-      content: "", // Ensure content has default value
+      content: "",
     },
   });
 
-  // Handle image selection
+  // Fetch blogs and check admin status on component mount
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        // Check admin status
+        const adminCheck = await axiosSecure.get("/api/users/check-admin");
+        setIsAdmin(adminCheck.data.isAdmin);
+
+        // Fetch blogs
+        const blogsResponse = await axiosSecure.get("/api/blogs");
+        setBlogs(blogsResponse.data.data || []);
+      } catch (error) {
+        toast.error("Failed to initialize blog data");
+        console.error("Initialization error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initialize();
+  }, [axiosSecure]);
+
+  // Handle image selection with validation
   const onImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate image
+    if (!file.type.match("image.*")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
     setSelectedImage(file);
     setPreviewImage(URL.createObjectURL(file));
   };
 
-  // Submit form
+  // Submit form with validation
   const onSubmit = async (data) => {
     if (!selectedImage) {
       toast.error("Please upload a thumbnail image");
@@ -62,24 +92,24 @@ const AddBlog = () => {
     }
 
     if (!data.content || data.content === "<p><br></p>") {
+      setContentValidationError(true);
       toast.error("Please add blog content");
       return;
     }
 
     setIsSubmitting(true);
-    toast.loading("Creating blog...");
-    console.log(data);
+    const toastId = toast.loading("Creating blog...");
 
     try {
-      // Upload image first
+      // Upload image
       const imageUrl = await uploadImageToImageBB(selectedImage);
 
-      // Submit blog data
+      // Prepare blog data
       const newBlog = {
         authorId: user.uid,
         title: data.title.trim(),
-        author: user.displayName,
-        authorEmail: user.email,
+        author: user.displayName || "Anonymous Author",
+        authorEmail: user.email || "no-email@example.com",
         thumbnail: imageUrl,
         content: data.content,
         status: "draft",
@@ -90,142 +120,235 @@ const AddBlog = () => {
         shares: [],
         tags: [],
         categories: [],
-        slug: data.title.replace(/\s+/g, "-").toLowerCase(),
-        date: new Date().toISOString(),
+        slug: data.title
+          .trim()
+          .toLowerCase()
+          .replace(/[^\w\s]/gi, "")
+          .replace(/\s+/g, "-"),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
-      const response = await axiosSecure.post("api/blogs", newBlog);
-      console.log(response);
+      // Submit to API
+      const response = await axiosSecure.post("/api/blogs", newBlog);
 
       if (response.data.success) {
-        toast.success("Blog created successfully");
+        toast.success("Blog created successfully", { id: toastId });
         reset();
         setSelectedImage(null);
         setPreviewImage("");
         setBlogs([response.data.data, ...blogs]);
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create blog");
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to create blog";
+      toast.error(errorMessage, { id: toastId });
       console.error("Blog creation error:", error);
     } finally {
       setIsSubmitting(false);
-      toast.dismiss();
     }
   };
 
-  // Change blog status
+  // Change blog status with confirmation
   const handleStatusChange = async (id, newStatus) => {
     if (!isAdmin) {
-      toast.error("Only admin can change status");
-      return;
-    }
-
-    try {
-      const response = await axiosSecure.patch(`/blogs/${id}/status`, {
-        status: newStatus,
-      });
-
-      if (response.data.success) {
-        setBlogs(
-          blogs.map((blog) =>
-            blog.id === id ? { ...blog, status: newStatus } : blog
-          )
-        );
-        toast.success(`Blog status updated to ${newStatus}`);
-      }
-    } catch (error) {
-      toast.error("Failed to update status");
-      console.error(error);
-    }
-  };
-
-  // Delete blog
-  const handleDeleteBlog = async (id) => {
-    if (!isAdmin) {
-      toast.error("Only admin can delete blogs");
+      toast.error("You don't have permission to perform this action");
       return;
     }
 
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
-      icon: "warning",
+      title: "Confirm Status Change",
+      text: `Are you sure you want to change this blog's status to ${newStatus}?`,
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, update it!",
     });
 
     if (result.isConfirmed) {
       try {
-        const response = await axiosSecure.delete(`/blogs/${id}`);
+        const response = await axiosSecure.patch(`/api/blogs/${id}/status`, {
+          status: newStatus,
+        });
+
         if (response.data.success) {
-          setBlogs(blogs.filter((blog) => blog.id !== id));
+          setBlogs(
+            blogs.map((blog) =>
+              blog._id === id ? { ...blog, status: newStatus } : blog
+            )
+          );
+          toast.success(
+            `Blog status updated to ${
+              newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
+            }`
+          );
+        }
+      } catch (error) {
+        toast.error("Failed to update status. Please try again.");
+        console.error("Status update error:", error);
+      }
+    }
+  };
+
+  // Delete blog with confirmation
+  const handleDeleteBlog = async (id) => {
+    if (!isAdmin) {
+      toast.error("You don't have permission to delete blogs");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Delete Blog Post",
+      text: "This action cannot be undone. All associated data will be permanently removed.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Delete Permanently",
+      cancelButtonText: "Cancel",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await axiosSecure.delete(`/api/blogs/${id}`);
+        if (response.data.success) {
+          setBlogs(blogs.filter((blog) => blog._id !== id));
           toast.success("Blog deleted successfully");
         }
       } catch (error) {
-        toast.error("Failed to delete blog");
-        console.error(error);
+        toast.error("Failed to delete blog. Please try again.");
+        console.error("Delete error:", error);
       }
     }
   };
 
   // Filter blogs by status
-  const filteredBlogs =
-    statusFilter === "all"
-      ? blogs
-      : blogs.filter((blog) => blog.status === statusFilter);
+  const filteredBlogs = blogs.filter((blog) =>
+    statusFilter === "all" ? true : blog.status === statusFilter
+  );
+
+  if (isLoading) {
+    return <LoadingSpinner fullScreen />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-        {/* Blog Creation Form */}
-        <div className="p-6 border-b dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-            Create New Blog
-          </h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+        {/* Blog Creation Section */}
+        <section className="p-6 border-b dark:border-gray-700">
+          <header className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+              Create New Blog Post
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Fill in the details below to create a new blog article
+            </p>
+          </header>
 
           <form onSubmit={handleSubmit(onSubmit)}>
+            {/* Title Field */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="blog-title"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Blog Title *
               </label>
               <input
+                id="blog-title"
                 type="text"
-                {...register("title", { required: true })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-amber-500 focus:border-amber-500"
-                placeholder="Enter blog title"
+                {...register("title", {
+                  required: "Title is required",
+                  minLength: {
+                    value: 10,
+                    message: "Title should be at least 10 characters",
+                  },
+                  maxLength: {
+                    value: 120,
+                    message: "Title should not exceed 120 characters",
+                  },
+                })}
+                className={`w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ${
+                  errors.title
+                    ? "border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+                placeholder="Enter a descriptive title for your blog"
+                aria-invalid={errors.title ? "true" : "false"}
               />
+              {errors.title && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.title.message}
+                </p>
+              )}
             </div>
 
+            {/* Thumbnail Upload */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Thumbnail Image *
               </label>
-              <div className="flex items-center">
-                <label className="flex flex-col items-center px-4 py-2 bg-white dark:bg-gray-700 rounded-md border border-gray-300 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600">
-                  <Upload className="w-5 h-5 text-amber-600" />
-                  <span className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              <div className="flex items-center gap-4">
+                <label
+                  className={`flex flex-col items-center justify-center px-4 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${
+                    previewImage
+                      ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                      : "border-gray-300 dark:border-gray-600 hover:border-amber-500"
+                  }`}
+                  tabIndex="0"
+                >
+                  <Upload
+                    className={`w-5 h-5 ${
+                      previewImage ? "text-amber-600" : "text-gray-500"
+                    }`}
+                  />
+                  <span
+                    className={`mt-1 text-sm ${
+                      previewImage
+                        ? "text-amber-600 font-medium"
+                        : "text-gray-600 dark:text-gray-400"
+                    }`}
+                  >
                     {previewImage ? "Change Image" : "Upload Image"}
                   </span>
                   <input
                     type="file"
                     className="hidden"
-                    accept="image/*"
+                    accept="image/png, image/jpeg, image/webp"
                     onChange={onImageChange}
                     disabled={isSubmitting}
                   />
                 </label>
                 {previewImage && (
-                  <img
-                    src={previewImage}
-                    alt="Preview"
-                    className="h-16 w-16 object-cover rounded-md ml-4"
-                  />
+                  <div className="relative">
+                    <img
+                      src={previewImage}
+                      alt="Preview"
+                      className="h-24 w-24 object-cover rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        setPreviewImage("");
+                      }}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      aria-label="Remove image"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 )}
               </div>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Recommended size: 1200x630 pixels (max 5MB)
+              </p>
             </div>
 
+            {/* Content Editor */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Blog Content *
@@ -233,167 +356,244 @@ const AddBlog = () => {
               <Controller
                 name="content"
                 control={control}
+                rules={{
+                  validate: (value) => value && value !== "<p><br></p>",
+                }}
                 render={({ field }) => (
-                  <JoditEditor
-                    ref={editor}
-                    value={field.value}
-                    onChange={(content) => {
-                      // Update form value and prevent empty content
-                      if (content !== "<p><br></p>") {
+                  <div
+                    className={`border rounded-md overflow-hidden ${
+                      contentValidationError || errors.content
+                        ? "border-red-500"
+                        : "border-gray-300 dark:border-gray-600"
+                    }`}
+                  >
+                    <JoditEditor
+                      ref={editor}
+                      value={field.value}
+                      onChange={(content) => {
                         field.onChange(content);
-                      } else {
-                        field.onChange("");
-                      }
-                    }}
-                    config={{
-                      placeholder: "Write your blog content here...",
-                      buttons: [
-                        "bold",
-                        "italic",
-                        "underline",
-                        "link",
-                        "ul",
-                        "ol",
-                        "align",
-                        "undo",
-                        "redo",
-                      ],
-                    }}
-                  />
+                        setContentValidationError(false);
+                      }}
+                      config={{
+                        placeholder: "Write your compelling content here...",
+                        buttons: [
+                          "bold",
+                          "italic",
+                          "underline",
+                          "strikethrough",
+                          "link",
+                          "ul",
+                          "ol",
+                          "outdent",
+                          "indent",
+                          "font",
+                          "fontsize",
+                          "paragraph",
+                          "image",
+                          "table",
+                          "align",
+                          "undo",
+                          "redo",
+                          "fullsize",
+                        ],
+                        height: 400,
+                        toolbarAdaptive: false,
+                        style: {
+                          fontFamily:
+                            "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                        },
+                      }}
+                    />
+                  </div>
                 )}
               />
+              {(contentValidationError || errors.content) && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please provide valid blog content
+                </p>
+              )}
             </div>
 
-            <div className="flex justify-end">
+            {/* Form Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  reset();
+                  setSelectedImage(null);
+                  setPreviewImage("");
+                }}
+                disabled={!isDirty && !previewImage}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Reset
+              </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !selectedImage || !isDirty}
-                className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md disabled:opacity-50"
+                disabled={
+                  isSubmitting ||
+                  !selectedImage ||
+                  !isDirty ||
+                  !watch("title") ||
+                  !watch("content") ||
+                  watch("content") === "<p><br></p>"
+                }
+                className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="mr-2" />
+                <Save className="mr-2 w-4 h-4" />
                 {isSubmitting ? "Creating..." : "Create Blog"}
               </button>
             </div>
           </form>
-        </div>
+        </section>
 
-        {/* Blog List Section */}
-        <div className="p-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
-              All Blogs
-            </h2>
+        {/* Blog Management Section */}
+        <section className="p-6">
+          <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                Blog Management
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {blogs.length} total blog posts
+              </p>
+            </div>
 
-            <div className="flex items-center">
-              <label className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                Filter:
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="status-filter"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Filter by:
               </label>
               <select
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                id="status-filter"
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
-                <option value="all">All</option>
-                <option value="draft">Draft</option>
+                <option value="all">All Statuses</option>
+                <option value="draft">Drafts</option>
                 <option value="published">Published</option>
+                <option value="archived">Archived</option>
               </select>
             </div>
-          </div>
+          </header>
 
           {filteredBlogs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.map((blog) => (
-                <div
-                  key={blog.id}
-                  className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-shadow duration-300"
+                <article
+                  key={blog._id}
+                  className="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="relative h-48 overflow-hidden">
+                  <div className="relative h-48 overflow-hidden group">
                     <img
                       src={blog.thumbnail}
                       alt={blog.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
                     />
-                    <div className="absolute top-2 right-2">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          blog.status === "published"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                            : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                        }`}
-                      >
-                        {blog.status}
-                      </span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                      <p className="text-white text-sm line-clamp-2">
+                        {blog.content.replace(/<[^>]*>/g, "").substring(0, 100)}
+                        {blog.content.length > 100 ? "..." : ""}
+                      </p>
                     </div>
+                    <span
+                      className={`absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                        blog.status === "published"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : blog.status === "draft"
+                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                      }`}
+                    >
+                      {blog.status}
+                    </span>
                   </div>
 
                   <div className="p-4">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2 line-clamp-2">
                       {blog.title}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                      Created: {new Date(blog.createdAt).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
+                      <span>
+                        {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span>{blog.views} views</span>
+                    </div>
 
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center border-t pt-3">
                       <button
-                        onClick={() => navigate(`/admin/edit-blog/${blog.id}`)}
-                        className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-400 flex items-center"
+                        onClick={() => navigate(`/admin/edit-blog/${blog._id}`)}
+                        className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-400 flex items-center text-sm font-medium"
+                        aria-label={`Edit ${blog.title}`}
                       >
                         <Edit className="w-4 h-4 mr-1" />
-                        <span className="text-xs">Edit</span>
+                        Edit
                       </button>
 
-                      <div className="flex space-x-2">
+                      <div className="flex gap-3">
                         {blog.status === "draft" ? (
                           <button
                             onClick={() =>
-                              handleStatusChange(blog.id, "published")
+                              handleStatusChange(blog._id, "published")
                             }
-                            className={`text-green-600 hover:text-green-800 dark:hover:text-green-400 flex items-center ${
+                            className={`text-green-600 hover:text-green-800 dark:hover:text-green-400 flex items-center text-sm font-medium ${
                               !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             disabled={!isAdmin}
+                            aria-label={`Publish ${blog.title}`}
                           >
                             <BookPlus className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Publish</span>
+                            Publish
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleStatusChange(blog.id, "draft")}
-                            className={`text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 flex items-center ${
+                            onClick={() =>
+                              handleStatusChange(blog._id, "draft")
+                            }
+                            className={`text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 flex items-center text-sm font-medium ${
                               !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             disabled={!isAdmin}
+                            aria-label={`Unpublish ${blog.title}`}
                           >
                             <EyeOff className="w-4 h-4 mr-1" />
-                            <span className="text-xs">Unpublish</span>
+                            Unpublish
                           </button>
                         )}
 
                         <button
-                          onClick={() => handleDeleteBlog(blog.id)}
-                          className={`text-red-600 hover:text-red-800 dark:hover:text-red-400 flex items-center ${
+                          onClick={() => handleDeleteBlog(blog._id)}
+                          className={`text-red-600 hover:text-red-800 dark:hover:text-red-400 flex items-center text-sm font-medium ${
                             !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                           }`}
                           disabled={!isAdmin}
+                          aria-label={`Delete ${blog.title}`}
                         >
                           <Trash2 className="w-4 h-4 mr-1" />
-                          <span className="text-xs">Delete</span>
+                          Delete
                         </button>
                       </div>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
-                No blogs found matching your criteria
-              </p>
-            </div>
+            <EmptyState
+              title="No blogs found"
+              description={`No blogs match the ${statusFilter} filter`}
+              icon={<BookPlus className="w-12 h-12 text-gray-400 mx-auto" />}
+            />
           )}
-        </div>
+        </section>
       </div>
     </div>
   );
