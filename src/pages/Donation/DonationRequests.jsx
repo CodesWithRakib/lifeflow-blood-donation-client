@@ -21,7 +21,6 @@ const DonationRequests = () => {
   const navigate = useNavigate();
   const axiosSecure = useAxios();
 
-  // State management
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -42,7 +41,6 @@ const DonationRequests = () => {
   const [districts, setDistricts] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch districts for filter dropdown
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
@@ -53,15 +51,9 @@ const DonationRequests = () => {
       }
     };
     fetchDistricts();
-  }, [axiosSecure]);
+  }, []);
 
-  // Fetch donation requests
   useEffect(() => {
-    if (!user) {
-      navigate("/login", { state: { from: "/donation-requests" } });
-      return;
-    }
-
     const fetchRequests = async () => {
       setLoading(true);
       try {
@@ -72,13 +64,12 @@ const DonationRequests = () => {
         }).toString();
 
         const res = await axiosSecure.get(`/api/donation-requests?${params}`);
-
         setRequests(res.data.data);
-        setPagination({
-          ...pagination,
+        setPagination((prev) => ({
+          ...prev,
           totalItems: res.data.pagination.totalItems,
           totalPages: res.data.pagination.totalPages,
-        });
+        }));
       } catch (err) {
         console.error(err);
         toast.error("Unable to load requests");
@@ -88,7 +79,7 @@ const DonationRequests = () => {
     };
 
     fetchRequests();
-  }, [user, navigate, axiosSecure, filters, pagination.page]);
+  }, [filters, pagination.page]); // pagination.page is enough
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -96,13 +87,11 @@ const DonationRequests = () => {
       ...prev,
       [name]: value,
     }));
-    // Reset to first page when filters change
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Trigger refetch with new search term
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -112,7 +101,13 @@ const DonationRequests = () => {
     }
   };
 
-  if (!user) return null;
+  const handleView = (id) => {
+    if (!user) {
+      navigate("/login", { state: { from: `/donation-requests/${id}` } });
+    } else {
+      navigate(`/donation-requests/${id}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -146,7 +141,10 @@ const DonationRequests = () => {
                   placeholder="Search requests..."
                   value={filters.search}
                   onChange={(e) =>
-                    setFilters((prev) => ({ ...prev, search: e.target.value }))
+                    setFilters((prev) => ({
+                      ...prev,
+                      search: e.target.value,
+                    }))
                   }
                   className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
                 />
@@ -160,7 +158,7 @@ const DonationRequests = () => {
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md mb-6 border border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Status
                 </label>
                 <select
@@ -170,14 +168,14 @@ const DonationRequests = () => {
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                 >
                   <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="fulfilled">Fulfilled</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="inprogress">In Progress</option>
+                  <option value="done">Done</option>
+                  <option value="canceled">Canceled</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Blood Group
                 </label>
                 <select
@@ -198,7 +196,7 @@ const DonationRequests = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   District
                 </label>
                 <select
@@ -217,7 +215,7 @@ const DonationRequests = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Sort By
                 </label>
                 <select
@@ -258,11 +256,13 @@ const DonationRequests = () => {
                         className={`px-2 py-1 rounded-full text-xs font-medium ${
                           req.status === "pending"
                             ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100"
-                            : req.status === "approved"
+                            : req.status === "inprogress"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
-                            : req.status === "fulfilled"
+                            : req.status === "done"
                             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                            : req.status === "canceled"
+                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
+                            : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {req.status.charAt(0).toUpperCase() +
@@ -270,31 +270,27 @@ const DonationRequests = () => {
                       </span>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <Droplet className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                         <span>
                           Blood Group: <strong>{req.bloodGroup}</strong>
                         </span>
                       </div>
-
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                         <span>
                           {req.district}, {req.upazila}
                         </span>
                       </div>
-
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <Hospital className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                         <span className="line-clamp-1">{req.hospital}</span>
                       </div>
-
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <Calendar className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                         <span>{new Date(req.date).toLocaleDateString()}</span>
                       </div>
-
                       <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                         <Clock className="h-4 w-4 text-amber-600 dark:text-amber-500" />
                         <span>{req.time}</span>
@@ -302,7 +298,7 @@ const DonationRequests = () => {
                     </div>
 
                     <button
-                      onClick={() => navigate(`/donation-requests/${req._id}`)}
+                      onClick={() => handleView(req._id)}
                       className="mt-4 w-full py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-800 text-white rounded-lg transition-colors"
                     >
                       View Details

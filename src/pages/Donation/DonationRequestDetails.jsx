@@ -15,6 +15,7 @@ const DonationRequestDetails = () => {
 
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ const DonationRequestDetails = () => {
   }, [id, user, navigate, axiosSecure]);
 
   const handleConfirm = async () => {
+    setSubmitting(true);
     try {
       await axiosSecure.patch(`/api/donation-requests/status/${id}`, {
         status: "inprogress",
@@ -47,14 +49,21 @@ const DonationRequestDetails = () => {
     } catch (err) {
       console.error(err);
       toast.error("Donation confirmation failed");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <p className="p-6 text-center">Loading...</p>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-amber-500"></div>
+      </div>
+    );
   }
+
   if (!request) {
-    return <p className="p-6 text-center">Request not found.</p>;
+    return <p className="p-6 text-center text-red-500">Request not found.</p>;
   }
 
   return (
@@ -63,8 +72,10 @@ const DonationRequestDetails = () => {
         <h1 className="text-2xl font-bold text-amber-600 dark:text-amber-500">
           Donation Request Details
         </h1>
+
         <p>
-          <span className="font-medium">Recipient:</span> {request.name}
+          <span className="font-medium">Recipient:</span>{" "}
+          {request.recipientName || request.name}
         </p>
         <p>
           <span className="font-medium">Location:</span> {request.district},{" "}
@@ -74,12 +85,19 @@ const DonationRequestDetails = () => {
           <span className="font-medium">Blood Group:</span> {request.bloodGroup}
         </p>
         <p>
+          <span className="font-medium">Hospital:</span> {request.hospital}
+        </p>
+        <p>
           <span className="font-medium">Needed Date:</span>{" "}
-          {new Date(request.neededDate).toLocaleDateString()}
+          {new Date(request.date || request.neededDate).toLocaleDateString()}
+        </p>
+        <p>
+          <span className="font-medium">Time:</span> {request.time}
         </p>
         <p>
           <span className="font-medium">Status:</span> {request.status}
         </p>
+
         <button
           onClick={() => setShowModal(true)}
           className="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
@@ -90,7 +108,7 @@ const DonationRequestDetails = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
               Confirm Donation
@@ -126,9 +144,10 @@ const DonationRequestDetails = () => {
               </button>
               <button
                 onClick={handleConfirm}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg"
+                disabled={submitting}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg disabled:opacity-50"
               >
-                Confirm
+                {submitting ? "Processing..." : "Confirm"}
               </button>
             </div>
           </div>
