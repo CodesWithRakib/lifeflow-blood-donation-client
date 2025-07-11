@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Bookmark, Edit, Eye, Save, Trash2, Upload } from "lucide-react";
 import JoditEditor from "jodit-react";
@@ -30,7 +30,22 @@ const EditBlog = () => {
     control,
     reset,
     formState: { isDirty, errors },
+    watch,
   } = useForm();
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (previewImage) URL.revokeObjectURL(previewImage);
+    };
+  }, [previewImage]);
+
+  // Check if content is empty (more robust)
+  const isContentEmpty = useCallback((content) => {
+    if (!content) return true;
+    const stripped = content.replace(/<[^>]*>/g, "").trim();
+    return stripped === "" || stripped === "\n";
+  }, []);
 
   // Fetch blog data and check admin status
   useEffect(() => {
@@ -38,26 +53,27 @@ const EditBlog = () => {
       try {
         setLoading(true);
 
-        // Check admin status
-        const adminCheck = await axiosSecure.get("/api/users/check-admin");
+        // Check admin status and fetch blog data in parallel
+        const [adminCheck, blogResponse] = await Promise.all([
+          axiosSecure.get("/api/user/check-admin"),
+          axiosSecure.get(`/api/blogs/${id}`),
+        ]);
+
         setIsAdmin(adminCheck.data.isAdmin);
 
-        // Fetch blog data
-        const response = await axiosSecure.get(`/api/blogs/${id}`);
-
-        if (!response.data.success) {
+        if (!blogResponse.data.success) {
           throw new Error("Blog not found");
         }
 
-        setBlog(response.data.data);
+        setBlog(blogResponse.data.data);
         reset({
-          title: response.data.data.title,
-          content: response.data.data.content,
+          title: blogResponse.data.data.title,
+          content: blogResponse.data.data.content,
         });
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error(error.message || "Failed to load blog");
-        navigate("/blogs");
+        navigate("/blogs", { replace: true });
       } finally {
         setLoading(false);
       }
@@ -66,69 +82,85 @@ const EditBlog = () => {
     fetchData();
   }, [id, axiosSecure, reset, navigate]);
 
-  // Handle image selection
-  const onImageChange = (e) => {
+  // Handle image selection with improved validation
+  const onImageChange = useCallback((e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate image
-    if (!file.type.match("image.*")) {
-      toast.error("Please select an image file");
+    // Validate file type
+    if (!file.type.match("image/(png|jpeg|webp)")) {
+      toast.error("Please select a valid image file (JPEG, PNG, or WEBP)");
       return;
     }
 
+    // Validate file size
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size should be less than 5MB");
       return;
     }
 
-    setSelectedImage(file);
-    setPreviewImage(URL.createObjectURL(file));
-  };
+    // Validate dimensions (client-side check)
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width < 600 || img.height < 315) {
+        toast.error("Recommended minimum dimensions: 600x315 pixels");
+      } else {
+        setSelectedImage(file);
+        setPreviewImage(img.src);
+      }
+    };
+    img.onerror = () => {
+      toast.error("Failed to load image. Please try another file.");
+    };
+  }, []);
 
   // Submit updated blog
-  const onSubmit = async (data) => {
-    if (!data.content || data.content === "<p><br></p>") {
-      toast.error("Please add blog content");
-      return;
-    }
-
-    setIsSubmitting(true);
-    const toastId = toast.loading("Updating blog...");
-
-    try {
-      let imageUrl = blog.thumbnail;
-
-      // Upload new image if selected
-      if (selectedImage) {
-        imageUrl = await uploadImageToImageBB(selectedImage);
+  const onSubmit = useCallback(
+    async (data) => {
+      if (isContentEmpty(data.content)) {
+        toast.error("Please add meaningful blog content");
+        return;
       }
 
-      const updatedBlog = {
-        title: data.title.trim(),
-        content: data.content,
-        thumbnail: imageUrl,
-        updatedAt: new Date().toISOString(),
-      };
+      setIsSubmitting(true);
+      const toastId = toast.loading("Updating blog...");
 
-      const response = await axiosSecure.put(`/api/blogs/${id}`, updatedBlog);
+      try {
+        let imageUrl = blog.thumbnail;
 
-      if (response.data.success) {
-        toast.success("Blog updated successfully", { id: toastId });
-        navigate(`/blogs/${id}`);
+        // Upload new image if selected
+        if (selectedImage) {
+          imageUrl = await uploadImageToImageBB(selectedImage);
+        }
+
+        const updatedBlog = {
+          title: data.title.trim(),
+          content: data.content,
+          thumbnail: imageUrl,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const response = await axiosSecure.put(`/api/blogs/${id}`, updatedBlog);
+
+        if (response.data.success) {
+          toast.success("Blog updated successfully", { id: toastId });
+          navigate(`/blogs/${id}`);
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to update blog";
+        toast.error(errorMessage, { id: toastId });
+        console.error("Blog update error:", error);
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update blog", {
-        id: toastId,
-      });
-      console.error("Blog update error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [blog, selectedImage, axiosSecure, id, navigate, isContentEmpty]
+  );
 
-  // Delete blog
-  const handleDelete = async () => {
+  // Delete blog with confirmation
+  const handleDelete = useCallback(async () => {
     if (!isAdmin) {
       toast.error("Only admin can delete blogs");
       return;
@@ -142,6 +174,14 @@ const EditBlog = () => {
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Delete Permanently",
+      background: "#ffffff dark:bg-gray-800",
+      customClass: {
+        popup: "dark:bg-gray-800 dark:text-white",
+        title: "dark:text-white",
+        content: "dark:text-gray-300",
+        confirmButton: "hover:bg-red-700 transition-colors",
+        cancelButton: "hover:bg-blue-600 transition-colors",
+      },
     });
 
     if (result.isConfirmed) {
@@ -149,36 +189,43 @@ const EditBlog = () => {
         const response = await axiosSecure.delete(`/api/blogs/${id}`);
         if (response.data.success) {
           toast.success("Blog deleted successfully");
-          navigate("/blogs");
+          navigate("/blogs", { replace: true });
         }
       } catch (error) {
-        toast.error("Failed to delete blog");
+        const errorMessage =
+          error.response?.data?.message || "Failed to delete blog";
+        toast.error(errorMessage);
         console.error("Delete error:", error);
       }
     }
-  };
+  }, [isAdmin, axiosSecure, id, navigate]);
 
   // Change blog status
-  const handleStatusChange = async (newStatus) => {
-    if (!isAdmin) {
-      toast.error("Only admin can change status");
-      return;
-    }
-
-    try {
-      const response = await axiosSecure.patch(`/api/blogs/${id}/status`, {
-        status: newStatus,
-      });
-
-      if (response.data.success) {
-        setBlog({ ...blog, status: newStatus });
-        toast.success(`Blog status updated to ${newStatus}`);
+  const handleStatusChange = useCallback(
+    async (newStatus) => {
+      if (!isAdmin) {
+        toast.error("Only admin can change status");
+        return;
       }
-    } catch (error) {
-      toast.error("Failed to update status");
-      console.error("Status update error:", error);
-    }
-  };
+
+      try {
+        const response = await axiosSecure.patch(`/api/blogs/${id}/status`, {
+          status: newStatus,
+        });
+
+        if (response.data.success) {
+          setBlog((prev) => ({ ...prev, status: newStatus }));
+          toast.success(`Blog status updated to ${newStatus}`);
+        }
+      } catch (error) {
+        const errorMessage =
+          error.response?.data?.message || "Failed to update status";
+        toast.error(errorMessage);
+        console.error("Status update error:", error);
+      }
+    },
+    [isAdmin, axiosSecure, id]
+  );
 
   if (loading) {
     return <LoadingSpinner fullScreen />;
@@ -192,7 +239,7 @@ const EditBlog = () => {
         </h2>
         <button
           onClick={() => navigate("/blogs")}
-          className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700"
+          className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
         >
           Browse All Blogs
         </button>
@@ -206,26 +253,29 @@ const EditBlog = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Edit Blog Post
         </h1>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => navigate(`/blogs/${id}`)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Preview blog"
           >
-            <Eye className="inline mr-2 w-4 h-4" />
+            <Eye className="mr-2 w-4 h-4" />
             Preview
           </button>
 
           {canEdit && (
             <button
               onClick={handleDelete}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              aria-label="Delete blog"
+              disabled={isSubmitting}
             >
-              <Trash2 className="inline mr-2 w-4 h-4" />
+              <Trash2 className="mr-2 w-4 h-4" />
               Delete
             </button>
           )}
@@ -233,7 +283,7 @@ const EditBlog = () => {
       </div>
 
       {/* Status Badge and Controls */}
-      <div className="flex justify-between items-center mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
         <span
           className={`px-3 py-1 rounded-full text-sm font-medium ${
             blog.status === "published"
@@ -251,14 +301,18 @@ const EditBlog = () => {
             {blog.status === "draft" ? (
               <button
                 onClick={() => handleStatusChange("published")}
-                className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors"
+                aria-label="Publish blog"
+                disabled={isSubmitting}
               >
                 Publish
               </button>
             ) : (
               <button
                 onClick={() => handleStatusChange("draft")}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
+                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                aria-label="Unpublish blog"
+                disabled={isSubmitting}
               >
                 Unpublish
               </button>
@@ -270,10 +324,14 @@ const EditBlog = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         {/* Title Field */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="blog-title"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Title *
           </label>
           <input
+            id="blog-title"
             type="text"
             {...register("title", {
               required: "Title is required",
@@ -291,10 +349,14 @@ const EditBlog = () => {
                 ? "border-red-500"
                 : "border-gray-300 dark:border-gray-600"
             }`}
-            disabled={!canEdit}
+            disabled={!canEdit || isSubmitting}
+            aria-invalid={errors.title ? "true" : "false"}
+            aria-describedby="title-error"
           />
           {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+            <p id="title-error" className="mt-1 text-sm text-red-600">
+              {errors.title.message}
+            </p>
           )}
         </div>
 
@@ -318,7 +380,8 @@ const EditBlog = () => {
                       setSelectedImage(null);
                       setPreviewImage("");
                     }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                    aria-label="Remove image"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -329,13 +392,31 @@ const EditBlog = () => {
                 src={blog.thumbnail}
                 alt={blog.title}
                 className="h-24 w-24 object-cover rounded-md"
+                loading="lazy"
               />
             )}
 
             {canEdit && (
-              <label className="flex flex-col items-center px-4 py-3 rounded-md border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-amber-500 cursor-pointer transition-colors">
-                <Upload className="w-5 h-5 text-gray-500" />
-                <span className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <label
+                className={`flex flex-col items-center px-4 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${
+                  previewImage
+                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+                    : "border-gray-300 dark:border-gray-600 hover:border-amber-500"
+                }`}
+                aria-label="Upload thumbnail image"
+              >
+                <Upload
+                  className={`w-5 h-5 ${
+                    previewImage ? "text-amber-600" : "text-gray-500"
+                  }`}
+                />
+                <span
+                  className={`mt-1 text-sm ${
+                    previewImage
+                      ? "text-amber-600 font-medium"
+                      : "text-gray-600 dark:text-gray-400"
+                  }`}
+                >
                   {previewImage ? "Change Image" : "Upload New Image"}
                 </span>
                 <input
@@ -361,7 +442,7 @@ const EditBlog = () => {
           <Controller
             name="content"
             control={control}
-            rules={{ validate: (value) => value && value !== "<p><br></p>" }}
+            rules={{ validate: (value) => !isContentEmpty(value) }}
             render={({ field }) => (
               <div
                 className={`border rounded-md overflow-hidden ${
@@ -375,7 +456,7 @@ const EditBlog = () => {
                   value={field.value}
                   onChange={field.onChange}
                   config={{
-                    readonly: !canEdit,
+                    readonly: !canEdit || isSubmitting,
                     placeholder: "Write your blog content here...",
                     buttons: [
                       "bold",
@@ -409,7 +490,7 @@ const EditBlog = () => {
           />
           {errors.content && (
             <p className="mt-1 text-sm text-red-600">
-              Please provide valid blog content
+              Please provide meaningful blog content
             </p>
           )}
         </div>
@@ -420,14 +501,20 @@ const EditBlog = () => {
             <button
               type="button"
               onClick={() => navigate(`/blogs/${id}`)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !isDirty}
-              className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md disabled:opacity-50"
+              disabled={
+                isSubmitting ||
+                !isDirty ||
+                isContentEmpty(watch("content")) ||
+                (!selectedImage && !blog.thumbnail)
+              }
+              className="flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? "Saving..." : "Save Changes"}

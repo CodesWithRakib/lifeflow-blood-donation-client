@@ -1,15 +1,15 @@
 import { BookPlus, Edit, EyeOff, Save, Trash2, Upload } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router";
 import JoditEditor from "jodit-react";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
-import useAxios from "../../hooks/useAxios";
 import uploadImageToImageBB from "../../utils/imageUpload";
 import useAuth from "../../hooks/useAuth";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import EmptyState from "../../components/common/EmptyState";
+import useAxios from "../../hooks/useAxios";
 
 const AddBlog = () => {
   const axiosSecure = useAxios();
@@ -26,6 +26,7 @@ const AddBlog = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [contentValidationError, setContentValidationError] = useState(false);
+  const [isEditorReady, setIsEditorReady] = useState(false);
 
   // Form setup
   const {
@@ -42,58 +43,89 @@ const AddBlog = () => {
     },
   });
 
-  // Fetch blogs and check admin status on component mount
-  useEffect(() => {
-    const initialize = async () => {
-      try {
-        // Check admin status
-        const adminCheck = await axiosSecure.get("/api/users/check-admin");
-        setIsAdmin(adminCheck.data.isAdmin);
+  // Memoized filtered blogs
+  const filteredBlogs = useMemo(() => {
+    return blogs.filter((blog) =>
+      statusFilter === "all" ? true : blog.status === statusFilter
+    );
+  }, [blogs, statusFilter]);
+  console.log(isAdmin);
+  // Initialize component
+  const initialize = useCallback(async () => {
+    try {
+      // Check if current user is admin
+      const [adminCheck, blogsResponse] = await Promise.all([
+        axiosSecure.get("/api/user/check-admin"),
+        axiosSecure.get("/api/blogs"),
+      ]);
 
-        // Fetch blogs
-        const blogsResponse = await axiosSecure.get("/api/blogs");
-        setBlogs(blogsResponse.data.data || []);
-      } catch (error) {
-        toast.error("Failed to initialize blog data");
-        console.error("Initialization error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initialize();
+      setIsAdmin(adminCheck.data.isAdmin);
+      setBlogs(blogsResponse.data.data || []);
+      console.log(blogsResponse.data.data);
+    } catch (error) {
+      toast.error("Failed to initialize blog data");
+      console.error("Initialization error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [axiosSecure]);
+
+  useEffect(() => {
+    initialize();
+    // Initialize editor after component mounts
+    const timer = setTimeout(() => {
+      setIsEditorReady(true);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [initialize]);
 
   // Handle image selection with validation
   const onImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate image
+    // Validate file type
     if (!file.type.match("image.*")) {
-      toast.error("Please select an image file");
+      toast.error("Please select an image file (JPEG, PNG, or WEBP)");
       return;
     }
 
+    // Validate file size
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size should be less than 5MB");
       return;
     }
 
-    setSelectedImage(file);
-    setPreviewImage(URL.createObjectURL(file));
+    // Validate dimensions (client-side check)
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width < 600 || img.height < 315) {
+        toast.error("Recommended minimum dimensions: 600x315 pixels");
+      } else {
+        setSelectedImage(file);
+        setPreviewImage(URL.createObjectURL(file));
+      }
+    };
   };
 
-  // Submit form with validation
+  // Check if content is empty (more robust)
+  const isContentEmpty = (content) => {
+    if (!content) return true;
+    const stripped = content.replace(/<[^>]*>/g, "").trim();
+    return stripped === "" || stripped === "\n";
+  };
+
+  // Submit form with validation and API call
   const onSubmit = async (data) => {
     if (!selectedImage) {
       toast.error("Please upload a thumbnail image");
       return;
     }
 
-    if (!data.content || data.content === "<p><br></p>") {
+    if (isContentEmpty(data.content)) {
       setContentValidationError(true);
-      toast.error("Please add blog content");
+      toast.error("Please add meaningful blog content");
       return;
     }
 
@@ -101,35 +133,27 @@ const AddBlog = () => {
     const toastId = toast.loading("Creating blog...");
 
     try {
-      // Upload image
+      // ✅ Upload thumbnail to ImageBB
       const imageUrl = await uploadImageToImageBB(selectedImage);
 
-      // Prepare blog data
+      // ✅ Generate slug
+      const slug = data.title
+        .trim()
+        .toLowerCase()
+        .replace(/[^\w\s]/gi, "")
+        .replace(/\s+/g, "-");
+
+      // ✅ Prepare blog data matching server requirements
       const newBlog = {
-        authorId: user.uid,
         title: data.title.trim(),
-        author: user.displayName || "Anonymous Author",
-        authorEmail: user.email || "no-email@example.com",
-        thumbnail: imageUrl,
+        slug,
         content: data.content,
-        status: "draft",
-        views: 0,
-        comments: [],
-        likes: [],
-        dislikes: [],
-        shares: [],
-        tags: [],
-        categories: [],
-        slug: data.title
-          .trim()
-          .toLowerCase()
-          .replace(/[^\w\s]/gi, "")
-          .replace(/\s+/g, "-"),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        thumbnail: imageUrl,
+        authorId: user.uid, // ✅ firebaseUid
+        authorImage: user.photoURL,
       };
 
-      // Submit to API
+      // ✅ POST to your backend
       const response = await axiosSecure.post("/api/blogs", newBlog);
 
       if (response.data.success) {
@@ -138,6 +162,8 @@ const AddBlog = () => {
         setSelectedImage(null);
         setPreviewImage("");
         setBlogs([response.data.data, ...blogs]);
+      } else {
+        throw new Error(response.data.message || "Unknown error");
       }
     } catch (error) {
       const errorMessage =
@@ -151,7 +177,7 @@ const AddBlog = () => {
     }
   };
 
-  // Change blog status with confirmation
+  // Change blog status (admin only)
   const handleStatusChange = async (id, newStatus) => {
     if (!isAdmin) {
       toast.error("You don't have permission to perform this action");
@@ -187,13 +213,16 @@ const AddBlog = () => {
           );
         }
       } catch (error) {
-        toast.error("Failed to update status. Please try again.");
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to update status. Please try again."
+        );
         console.error("Status update error:", error);
       }
     }
   };
 
-  // Delete blog with confirmation
+  // Delete blog (admin only)
   const handleDeleteBlog = async (id) => {
     if (!isAdmin) {
       toast.error("You don't have permission to delete blogs");
@@ -219,16 +248,14 @@ const AddBlog = () => {
           toast.success("Blog deleted successfully");
         }
       } catch (error) {
-        toast.error("Failed to delete blog. Please try again.");
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to delete blog. Please try again."
+        );
         console.error("Delete error:", error);
       }
     }
   };
-
-  // Filter blogs by status
-  const filteredBlogs = blogs.filter((blog) =>
-    statusFilter === "all" ? true : blog.status === statusFilter
-  );
 
   if (isLoading) {
     return <LoadingSpinner fullScreen />;
@@ -278,9 +305,10 @@ const AddBlog = () => {
                 }`}
                 placeholder="Enter a descriptive title for your blog"
                 aria-invalid={errors.title ? "true" : "false"}
+                aria-describedby="title-error"
               />
               {errors.title && (
-                <p className="mt-1 text-sm text-red-600">
+                <p id="title-error" className="mt-1 text-sm text-red-600">
                   {errors.title.message}
                 </p>
               )}
@@ -299,6 +327,7 @@ const AddBlog = () => {
                       : "border-gray-300 dark:border-gray-600 hover:border-amber-500"
                   }`}
                   tabIndex="0"
+                  aria-label="Upload thumbnail image"
                 >
                   <Upload
                     className={`w-5 h-5 ${
@@ -335,7 +364,7 @@ const AddBlog = () => {
                         setSelectedImage(null);
                         setPreviewImage("");
                       }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                       aria-label="Remove image"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -357,7 +386,7 @@ const AddBlog = () => {
                 name="content"
                 control={control}
                 rules={{
-                  validate: (value) => value && value !== "<p><br></p>",
+                  validate: (value) => !isContentEmpty(value),
                 }}
                 render={({ field }) => (
                   <div
@@ -367,49 +396,70 @@ const AddBlog = () => {
                         : "border-gray-300 dark:border-gray-600"
                     }`}
                   >
-                    <JoditEditor
-                      ref={editor}
-                      value={field.value}
-                      onChange={(content) => {
-                        field.onChange(content);
-                        setContentValidationError(false);
-                      }}
-                      config={{
-                        placeholder: "Write your compelling content here...",
-                        buttons: [
-                          "bold",
-                          "italic",
-                          "underline",
-                          "strikethrough",
-                          "link",
-                          "ul",
-                          "ol",
-                          "outdent",
-                          "indent",
-                          "font",
-                          "fontsize",
-                          "paragraph",
-                          "image",
-                          "table",
-                          "align",
-                          "undo",
-                          "redo",
-                          "fullsize",
-                        ],
-                        height: 400,
-                        toolbarAdaptive: false,
-                        style: {
-                          fontFamily:
-                            "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-                        },
-                      }}
-                    />
+                    {isEditorReady && (
+                      <JoditEditor
+                        ref={editor}
+                        value={field.value}
+                        onChange={(content) => {
+                          field.onChange(content);
+                          setContentValidationError(false);
+                        }}
+                        onBlur={(newContent) => field.onChange(newContent)}
+                        config={{
+                          placeholder: "Write your compelling content here...",
+                          buttons: [
+                            "bold",
+                            "italic",
+                            "underline",
+                            "strikethrough",
+                            "link",
+                            "ul",
+                            "ol",
+                            "outdent",
+                            "indent",
+                            "font",
+                            "fontsize",
+                            "paragraph",
+                            "image",
+                            "table",
+                            "align",
+                            "undo",
+                            "redo",
+                            "fullsize",
+                          ],
+                          height: 400,
+                          toolbarAdaptive: false,
+                          disablePlugins: "paste,tab",
+                          zIndex: 0,
+                          iframe: false,
+                          readonly: false,
+                          style: {
+                            fontFamily:
+                              "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                          },
+                          events: {
+                            afterInit: (instance) => {
+                              // Safely call focus on the instance, not on editor.current
+                              setTimeout(() => {
+                                try {
+                                  instance?.focus();
+                                } catch (err) {
+                                  console.warn("Editor focus failed:", err);
+                                }
+                              }, 100);
+                            },
+                          },
+                        }}
+                        tabIndex={1}
+                      />
+                    )}
                   </div>
                 )}
               />
               {(contentValidationError || errors.content) && (
                 <p className="mt-1 text-sm text-red-600">
-                  Please provide valid blog content
+                  Please provide meaningful blog content (at least 100
+                  characters)
                 </p>
               )}
             </div>
@@ -424,7 +474,7 @@ const AddBlog = () => {
                   setPreviewImage("");
                 }}
                 disabled={!isDirty && !previewImage}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Reset
               </button>
@@ -435,8 +485,7 @@ const AddBlog = () => {
                   !selectedImage ||
                   !isDirty ||
                   !watch("title") ||
-                  !watch("content") ||
-                  watch("content") === "<p><br></p>"
+                  isContentEmpty(watch("content"))
                 }
                 className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -455,7 +504,8 @@ const AddBlog = () => {
                 Blog Management
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {blogs.length} total blog posts
+                {blogs.length} total blog posts • {filteredBlogs.length}{" "}
+                filtered
               </p>
             </div>
 
@@ -468,9 +518,10 @@ const AddBlog = () => {
               </label>
               <select
                 id="status-filter"
-                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
+                aria-label="Filter blogs by status"
               >
                 <option value="all">All Statuses</option>
                 <option value="draft">Drafts</option>
@@ -480,7 +531,7 @@ const AddBlog = () => {
             </div>
           </header>
 
-          {filteredBlogs.length > 0 ? (
+          {filteredBlogs?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredBlogs.map((blog) => (
                 <article
@@ -496,12 +547,14 @@ const AddBlog = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
                       <p className="text-white text-sm line-clamp-2">
-                        {blog.content.replace(/<[^>]*>/g, "").substring(0, 100)}
-                        {blog.content.length > 100 ? "..." : ""}
+                        {blog.content
+                          ?.replace(/<[^>]*>/g, "")
+                          .substring(0, 100) || "No content"}
+                        {blog.content?.length > 100 ? "..." : ""}
                       </p>
                     </div>
                     <span
-                      className={`absolute top-2 right-2 px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                      className={`absolute top-2 right-2 px-2 py-1 text-xs font-semibold capitalize rounded-full ${
                         blog.status === "published"
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           : blog.status === "draft"
@@ -531,7 +584,7 @@ const AddBlog = () => {
                     <div className="flex justify-between items-center border-t pt-3">
                       <button
                         onClick={() => navigate(`/admin/edit-blog/${blog._id}`)}
-                        className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-400 flex items-center text-sm font-medium"
+                        className="text-amber-600 hover:text-amber-800 dark:hover:text-amber-400 flex items-center text-sm font-medium transition-colors"
                         aria-label={`Edit ${blog.title}`}
                       >
                         <Edit className="w-4 h-4 mr-1" />
@@ -544,7 +597,7 @@ const AddBlog = () => {
                             onClick={() =>
                               handleStatusChange(blog._id, "published")
                             }
-                            className={`text-green-600 hover:text-green-800 dark:hover:text-green-400 flex items-center text-sm font-medium ${
+                            className={`text-green-600 hover:text-green-800 dark:hover:text-green-400 flex items-center text-sm font-medium transition-colors ${
                               !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             disabled={!isAdmin}
@@ -558,7 +611,7 @@ const AddBlog = () => {
                             onClick={() =>
                               handleStatusChange(blog._id, "draft")
                             }
-                            className={`text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 flex items-center text-sm font-medium ${
+                            className={`text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 flex items-center text-sm font-medium transition-colors ${
                               !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                             }`}
                             disabled={!isAdmin}
@@ -571,7 +624,7 @@ const AddBlog = () => {
 
                         <button
                           onClick={() => handleDeleteBlog(blog._id)}
-                          className={`text-red-600 hover:text-red-800 dark:hover:text-red-400 flex items-center text-sm font-medium ${
+                          className={`text-red-600 hover:text-red-800 dark:hover:text-red-400 flex items-center text-sm font-medium transition-colors ${
                             !isAdmin ? "opacity-50 cursor-not-allowed" : ""
                           }`}
                           disabled={!isAdmin}

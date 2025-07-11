@@ -9,7 +9,6 @@ import PrivateRoute from "../auth/PrivateRoute";
 import DonationRequests from "../pages/Donation/DonationRequests";
 import AboutUs from "../pages/about/AboutUs";
 import FAQ from "../pages/Faq/FAQ";
-import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsOfService from "../pages/Terms/TermsOfService";
 import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard";
 import Profile from "../pages/Dashboard/Profile";
@@ -29,6 +28,7 @@ import BlogDetails from "../pages/Blogs/BlogDetails";
 import Dashboard from "../layouts/Dashboard";
 import EditDonationRequest from "../components/form/EditDonationRequest";
 import BlogPreview from "../pages/Blogs/BlogPreview";
+import Privacy from "../pages/Privacy/Privacy";
 
 export const router = createBrowserRouter([
   {
@@ -37,13 +37,13 @@ export const router = createBrowserRouter([
     errorElement: <Error />,
     children: [
       { index: true, element: <Home /> },
-      { path: "search", element: <SearchPage /> },
+      { path: "search-donors", element: <SearchPage /> },
       { path: "blog", element: <Blogs /> },
       { path: "blogs/:id", element: <BlogDetails /> },
       { path: "contact", element: <ContactUs /> },
       { path: "about", element: <AboutUs /> },
       { path: "faq", element: <FAQ /> },
-      { path: "privacy", element: <PrivacyPolicy /> },
+      { path: "privacy", element: <Privacy /> },
       { path: "terms", element: <TermsOfService /> },
       { path: "register", element: <Register /> },
       { path: "login", element: <Login /> },
