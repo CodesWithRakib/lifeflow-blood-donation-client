@@ -9,6 +9,7 @@ import {
   UserPlus,
   Star,
   Trash,
+  UserMinus,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Swal from "sweetalert2";
@@ -23,7 +24,6 @@ const AllUsers = () => {
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const axiosSecure = useAxios();
 
-  // Fetch users from API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -41,13 +41,11 @@ const AllUsers = () => {
     fetchUsers();
   }, [axiosSecure]);
 
-  // Filter users based on status
   const filteredUsers = users.filter((user) => {
     if (statusFilter === "all") return true;
     return user.status === statusFilter;
   });
 
-  // Pagination logic
   const indexOfLastUser = currentPage * itemsPerPage;
   const indexOfFirstUser = indexOfLastUser - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
@@ -59,7 +57,6 @@ const AllUsers = () => {
     setDropdownOpen(dropdownOpen === userId ? null : userId);
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
       if (dropdownOpen !== null) {
@@ -72,10 +69,9 @@ const AllUsers = () => {
     };
   }, [dropdownOpen]);
 
-  // User action handlers
   const updateUserStatus = async (userId, status) => {
     try {
-      const res = await axiosSecure.patch(`/api/users/status/${userId}`, {
+      const res = await axiosSecure.patch(`/api/user/status/${userId}`, {
         status,
       });
       setUsers(
@@ -93,7 +89,7 @@ const AllUsers = () => {
 
   const updateUserRole = async (userId, role) => {
     try {
-      const res = await axiosSecure.patch(`/api/users/role/${userId}`, {
+      const res = await axiosSecure.patch(`/api/user/role/${userId}`, {
         role,
       });
       setUsers(
@@ -130,7 +126,7 @@ const AllUsers = () => {
 
     if (result.isConfirmed) {
       try {
-        const res = await axiosSecure.delete(`/api/users/${userId}`);
+        const res = await axiosSecure.delete(`/api/user/${userId}`);
         setUsers(users.filter((user) => user._id !== userId));
         Swal.fire({
           title: "Deleted!",
@@ -149,7 +145,6 @@ const AllUsers = () => {
     }
   };
 
-  // Get role icon and color
   const getRoleIcon = (role) => {
     switch (role) {
       case "admin":

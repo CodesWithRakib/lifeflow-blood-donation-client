@@ -17,31 +17,17 @@ import {
   HeartHandshake,
   FileText,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import useAxios from "../hooks/useAxios";
 import LoadingSpinner from "../components/LoadingSpinner";
 import useAuth from "../hooks/useAuth";
+import useRole from "../hooks/useRole";
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const axiosSecure = useAxios();
   const { logOut } = useAuth();
   const navigate = useNavigate();
-
-  const {
-    data: user,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const { data } = await axiosSecure.get("/api/user");
-      return data.data;
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  const { user, isLoading, error } = useRole();
 
   useEffect(() => {
     const handleResize = () => {
@@ -118,7 +104,6 @@ const Dashboard = () => {
     logOut()
       .then(() => {
         navigate("/login");
-        refetch();
       })
       .catch((error) => console.error(error));
   };
@@ -127,7 +112,7 @@ const Dashboard = () => {
   if (error) return <div>Error loading user data</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Mobile menu button */}
       {isMobile && (
         <button
@@ -159,7 +144,7 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: isMobile ? -300 : 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={`fixed md:relative z-30 w-64 h-full bg-white dark:bg-gray-800 shadow-lg flex flex-col`}
+              className={`fixed md:relative z-30 w-64 h-full bg-white dark:bg-gray-800 shadow-lg flex flex-col border-r border-gray-200 dark:border-gray-700`}
             >
               {/* Sidebar Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
@@ -178,9 +163,9 @@ const Dashboard = () => {
                 {isMobile && (
                   <button
                     onClick={() => setSidebarOpen(false)}
-                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
                   >
-                    <X size={20} className="text-gray-500 dark:text-gray-400" />
+                    <X size={20} />
                   </button>
                 )}
               </div>
@@ -188,31 +173,33 @@ const Dashboard = () => {
               {/* User Profile */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={user?.avatar || "/default-avatar.png"}
-                    alt={user?.name}
-                    className="w-10 h-10 rounded-full object-cover bg-gray-200 dark:bg-gray-600"
-                  />
-                  <div>
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                    <img
+                      src={user?.avatar || "/default-avatar.png"}
+                      alt={user?.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {user?.name}
+                      {user?.name || "User"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                      {user?.role}
+                      {user?.role || "role"}
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Navigation Links */}
-              <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              <nav className="flex-1 overflow-y-auto py-2 px-3 space-y-1">
                 {getLinks().map(({ to, label, icon }) => (
                   <NavLink
                     key={to}
                     to={to}
                     end
                     className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
+                      `flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${
                         isActive
                           ? "bg-amber-50 text-amber-600 dark:bg-gray-700 dark:text-amber-400 font-medium"
                           : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -220,14 +207,14 @@ const Dashboard = () => {
                     }
                     onClick={() => isMobile && setSidebarOpen(false)}
                   >
-                    <span className="text-current">{icon}</span>
-                    <span>{label}</span>
+                    <span className="flex-shrink-0">{icon}</span>
+                    <span className="truncate">{label}</span>
                   </NavLink>
                 ))}
               </nav>
 
               {/* Footer Actions */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700 space-y-1">
                 <button className="flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                   <Settings size={18} />
                   <span>Settings</span>
@@ -254,18 +241,20 @@ const Dashboard = () => {
               Dashboard
             </h1>
             <div className="flex items-center space-x-4">
-              <img
-                src={user?.avatar || "/default-avatar.png"}
-                alt={user?.name}
-                className="w-8 h-8 rounded-full object-cover bg-gray-200 dark:bg-gray-600"
-              />
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                <img
+                  src={user?.avatar || "/default-avatar.png"}
+                  alt={user?.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </header>
         )}
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-gray-900">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto w-full">
             <Outlet context={{ user }} />
           </div>
         </main>

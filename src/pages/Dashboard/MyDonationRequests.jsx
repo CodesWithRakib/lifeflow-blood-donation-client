@@ -35,7 +35,9 @@ const MyDonationRequests = () => {
       setError(null);
       try {
         const res = await axiosSecure.get(
-          `/api/donation-requests?requesterEmail=${user?.email}`
+          `/api/donation-requests?requesterEmail=${user?.email}&status=${
+            filter === "all" ? "" : filter
+          }`
         );
         setRequests(res.data?.data || []);
       } catch (err) {
@@ -48,8 +50,7 @@ const MyDonationRequests = () => {
     };
 
     if (user?.email) fetchRequests();
-  }, [axiosSecure, user?.email]);
-
+  }, [axiosSecure, user?.email, filter]);
   const handleStatusChange = async (id, newStatus) => {
     try {
       await axiosSecure.patch(`/api/donation-requests/status/${id}`, {

@@ -32,13 +32,16 @@ const DashboardHome = () => {
 
   // Fetch recent donation requests for donor only
   useEffect(() => {
-    if (isDonor && user?._id) {
+    if (isDonor && user?.email) {
       const fetchRequests = async () => {
         setLoading(true);
         try {
-          const res = await axiosSecure.get("/api/donation-requests/recent");
+          const res = await axiosSecure.get(
+            `/api/donation-requests/recent/${user.email}`
+          );
           setRecentRequests(res.data.data || []);
         } catch (err) {
+          console.error(err);
           setReqError("Failed to load recent donation requests.");
           toast.error("Failed to load requests.");
         } finally {
@@ -47,7 +50,7 @@ const DashboardHome = () => {
       };
       fetchRequests();
     }
-  }, [axiosSecure, isDonor, user?._id]);
+  }, [axiosSecure, isDonor, user?.email]);
 
   // Fetch stats for Admin & Volunteer
   const { data: stats = {} } = useQuery({

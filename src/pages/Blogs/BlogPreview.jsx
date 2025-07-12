@@ -9,6 +9,11 @@ import {
   MessageSquare,
   Share2,
   AlertTriangle,
+  ChevronLeft,
+  Twitter,
+  Linkedin,
+  Facebook,
+  Link as LinkIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import useAuth from "../../hooks/useAuth";
@@ -35,7 +40,7 @@ const ErrorMessage = ({
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-6 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           {retryText}
         </button>
@@ -70,6 +75,7 @@ const BlogPreview = () => {
   const [error, setError] = useState(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [showShareOptions, setShowShareOptions] = useState(false);
 
   const { id } = useParams();
   const { user } = useAuth();
@@ -148,22 +154,56 @@ const BlogPreview = () => {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (platform) => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: blog.title,
-          text: blog.excerpt || `Check out this blog: ${blog.title}`,
-          url: window.location.href,
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Link copied to clipboard!");
+      const url = window.location.href;
+      const title = blog.title;
+      const text = blog.excerpt || `Check out this blog: ${blog.title}`;
+
+      switch (platform) {
+        case "twitter":
+          window.open(
+            `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+              url
+            )}&text=${encodeURIComponent(text)}`,
+            "_blank"
+          );
+          break;
+        case "facebook":
+          window.open(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              url
+            )}`,
+            "_blank"
+          );
+          break;
+        case "linkedin":
+          window.open(
+            `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+              url
+            )}`,
+            "_blank"
+          );
+          break;
+        case "copy":
+          await navigator.clipboard.writeText(url);
+          toast.success("Link copied to clipboard!");
+          break;
+        default:
+          if (navigator.share) {
+            await navigator.share({
+              title,
+              text,
+              url,
+            });
+          }
       }
     } catch (error) {
-      if (!navigator.share) {
-        toast.error("Failed to copy link");
+      if (error.name !== "AbortError") {
+        toast.error("Failed to share");
       }
+    } finally {
+      setShowShareOptions(false);
     }
   };
 
@@ -192,7 +232,7 @@ const BlogPreview = () => {
         </h2>
         <button
           onClick={() => navigate("/blogs")}
-          className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors focus:ring-2 focus:ring-amber-500 focus:outline-none"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
         >
           Browse All Blogs
         </button>
@@ -201,41 +241,30 @@ const BlogPreview = () => {
 
   return (
     <ErrorBoundary>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Breadcrumb Navigation */}
-        <nav
-          aria-label="Breadcrumb"
-          className="mb-6 text-sm text-gray-600 dark:text-gray-400"
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors mb-6"
         >
-          <ol className="flex flex-wrap items-center gap-2">
-            <li>
-              <Link
-                to="/"
-                className="hover:underline hover:text-amber-600 transition-colors"
-              >
-                Home
-              </Link>
-            </li>
-            <li>/</li>
-            <li>
-              <Link
-                to="/blogs"
-                className="hover:underline hover:text-amber-600 transition-colors"
-              >
-                Blogs
-              </Link>
-            </li>
-            <li>/</li>
-            <li className="text-amber-600 truncate max-w-xs">{blog.title}</li>
-          </ol>
-        </nav>
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Back to Blogs
+        </button>
 
         {/* Blog Header Section */}
         <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          {/* Category/Tag */}
+          {blog.category && (
+            <span className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium mb-4">
+              {blog.category}
+            </span>
+          )}
+
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4 leading-tight">
             {blog.title}
           </h1>
 
+          {/* Meta Information */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
@@ -297,9 +326,9 @@ const BlogPreview = () => {
         )}
 
         {/* Blog Content */}
-        <article className="prose dark:prose-invert max-w-none mb-12">
+        <article className="prose dark:prose-invert prose-lg max-w-none mb-12">
           {blog.excerpt && (
-            <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-6">
+            <p className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-6">
               {blog.excerpt}
             </p>
           )}
@@ -321,7 +350,7 @@ const BlogPreview = () => {
                 <Link
                   key={tag}
                   to={`/blogs?tag=${encodeURIComponent(tag)}`}
-                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors"
+                  className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                 >
                   {tag}
                 </Link>
@@ -348,7 +377,7 @@ const BlogPreview = () => {
             </button>
 
             <button
-              className="flex items-center space-x-1 text-gray-500 hover:text-amber-500 transition-colors"
+              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors"
               aria-label="View comments"
             >
               <MessageSquare className="w-5 h-5" />
@@ -362,8 +391,8 @@ const BlogPreview = () => {
               aria-label={isBookmarked ? "Remove bookmark" : "Bookmark blog"}
               className={`transition-colors ${
                 isBookmarked
-                  ? "text-amber-500"
-                  : "text-gray-500 hover:text-amber-500"
+                  ? "text-blue-500"
+                  : "text-gray-500 hover:text-blue-500"
               }`}
             >
               <Bookmark
@@ -372,13 +401,50 @@ const BlogPreview = () => {
               />
             </button>
 
-            <button
-              onClick={handleShare}
-              className="text-gray-500 hover:text-amber-500 transition-colors"
-              aria-label="Share blog"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowShareOptions(!showShareOptions)}
+                className="text-gray-500 hover:text-blue-500 transition-colors"
+                aria-label="Share blog"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+
+              {showShareOptions && (
+                <div className="absolute right-0 bottom-full mb-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                  <div className="p-2">
+                    <button
+                      onClick={() => handleShare("twitter")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                    >
+                      <Twitter className="w-4 h-4 mr-2" />
+                      Share on Twitter
+                    </button>
+                    <button
+                      onClick={() => handleShare("facebook")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                    >
+                      <Facebook className="w-4 h-4 mr-2" />
+                      Share on Facebook
+                    </button>
+                    <button
+                      onClick={() => handleShare("linkedin")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                    >
+                      <Linkedin className="w-4 h-4 mr-2" />
+                      Share on LinkedIn
+                    </button>
+                    <button
+                      onClick={() => handleShare("copy")}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                    >
+                      <LinkIcon className="w-4 h-4 mr-2" />
+                      Copy Link
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -413,9 +479,9 @@ const BlogPreview = () => {
                       href={blog.authorSocial.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-500 hover:text-amber-500 transition-colors"
+                      className="text-gray-500 hover:text-blue-500 transition-colors"
                     >
-                      Twitter
+                      <Twitter className="w-5 h-5" />
                     </a>
                   )}
                   {blog.authorSocial.linkedin && (
@@ -423,9 +489,9 @@ const BlogPreview = () => {
                       href={blog.authorSocial.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-500 hover:text-amber-500 transition-colors"
+                      className="text-gray-500 hover:text-blue-500 transition-colors"
                     >
-                      LinkedIn
+                      <Linkedin className="w-5 h-5" />
                     </a>
                   )}
                 </div>

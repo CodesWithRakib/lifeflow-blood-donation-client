@@ -9,8 +9,8 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3,
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
     },
   },
 };
@@ -22,7 +22,7 @@ const itemVariants = {
     opacity: 1,
     transition: {
       duration: 0.5,
-      ease: "easeOut",
+      ease: [0.16, 1, 0.3, 1],
     },
   },
 };
@@ -33,7 +33,7 @@ const blobVariants = {
     y: [0, -50, 20, 0],
     scale: [1, 1.1, 0.9, 1],
     transition: {
-      duration: 7,
+      duration: 10,
       repeat: Infinity,
       ease: "linear",
     },
@@ -49,7 +49,7 @@ const Banner = () => {
   return (
     <section
       ref={ref}
-      className="relative bg-gradient-to-r from-red-600 to-red-800 dark:from-red-800 dark:to-red-900 text-white overflow-hidden"
+      className="relative bg-gradient-to-br from-red-600 to-red-700 dark:from-red-800 dark:to-red-900 text-white overflow-hidden"
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -58,47 +58,47 @@ const Banner = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 relative z-10">
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center"
           variants={containerVariants}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
         >
           {/* Content */}
-          <div className="text-center md:text-left">
+          <div className="text-center lg:text-left">
             <motion.div variants={itemVariants}>
-              <Droplet className="h-12 w-12 mx-auto md:mx-0 mb-4 text-red-200" />
+              <Droplet className="h-12 w-12 mx-auto lg:mx-0 mb-4 text-red-200" />
             </motion.div>
 
             <motion.h1
-              className="text-4xl md:text-5xl font-bold leading-tight mb-6"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6"
               variants={itemVariants}
             >
               Save Lives With Your{" "}
-              <span className="text-amber-300">Donation</span>
+              <span className="text-amber-300">Blood Donation</span>
             </motion.h1>
 
             <motion.p
-              className="text-lg md:text-xl text-red-100 max-w-lg mb-8"
+              className="text-lg md:text-xl text-red-100 max-w-lg mb-8 mx-auto lg:mx-0"
               variants={itemVariants}
             >
-              Every drop counts. Join our community of donors or find the help
-              you need.
+              Join our community of life-savers or find the donors you need.
+              Every donation makes a difference.
             </motion.p>
 
             <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start"
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               variants={itemVariants}
             >
               <Link
                 to="/register"
-                className="bg-white text-red-700 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2"
+                className="bg-white hover:bg-gray-50 text-red-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5"
               >
                 <HeartHandshake className="h-5 w-5" />
                 Join as a Donor
               </Link>
               <Link
                 to="/search-donors"
-                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2"
+                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5"
               >
                 <Search className="h-5 w-5" />
                 Search Donors
@@ -106,9 +106,10 @@ const Banner = () => {
             </motion.div>
           </div>
 
-          {/* Illustration */}
-          <div className="hidden md:flex justify-center">
+          {/* Illustration - Visible on lg screens and up */}
+          <div className="hidden lg:flex justify-center">
             <div className="relative w-full max-w-md">
+              {/* Floating blobs */}
               <motion.div
                 className="absolute -top-8 -left-8 w-32 h-32 bg-amber-400 rounded-full mix-blend-multiply filter blur-xl opacity-70"
                 variants={blobVariants}
@@ -119,66 +120,86 @@ const Banner = () => {
                 variants={blobVariants}
                 animate="animate"
                 initial={{ x: 0, y: 0, scale: 1 }}
-                transition={{ ...blobVariants.animate.transition, delay: 2 }}
+                transition={{ ...blobVariants.animate.transition, delay: 3 }}
               />
               <motion.div
                 className="absolute top-16 -right-8 w-32 h-32 bg-amber-500 rounded-full mix-blend-multiply filter blur-xl opacity-70"
                 variants={blobVariants}
                 animate="animate"
                 initial={{ x: 0, y: 0, scale: 1 }}
-                transition={{ ...blobVariants.animate.transition, delay: 4 }}
+                transition={{ ...blobVariants.animate.transition, delay: 6 }}
               />
 
+              {/* Info card */}
               <motion.div
-                className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20"
+                className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 shadow-lg"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={inView ? { opacity: 1, scale: 1 } : {}}
-                transition={{ delay: 0.6, duration: 0.5 }}
+                transition={{
+                  delay: 0.4,
+                  duration: 0.6,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
                 <div className="flex flex-col items-center text-center">
                   <Droplet className="h-16 w-16 text-red-200 mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Why Donate Blood?</h3>
-                  <ul className="space-y-2 text-red-100 text-left">
-                    <motion.li
-                      className="flex items-start gap-2"
-                      initial={{ x: 20, opacity: 0 }}
-                      animate={inView ? { x: 0, opacity: 1 } : {}}
-                      transition={{ delay: 0.7 }}
-                    >
-                      <span className="text-amber-300">•</span>
-                      <span>1 donation can save up to 3 lives</span>
-                    </motion.li>
-                    <motion.li
-                      className="flex items-start gap-2"
-                      initial={{ x: 20, opacity: 0 }}
-                      animate={inView ? { x: 0, opacity: 1 } : {}}
-                      transition={{ delay: 0.8 }}
-                    >
-                      <span className="text-amber-300">•</span>
-                      <span>Only takes about 10 minutes</span>
-                    </motion.li>
-                    <motion.li
-                      className="flex items-start gap-2"
-                      initial={{ x: 20, opacity: 0 }}
-                      animate={inView ? { x: 0, opacity: 1 } : {}}
-                      transition={{ delay: 0.9 }}
-                    >
-                      <span className="text-amber-300">•</span>
-                      <span>Helps maintain your own health</span>
-                    </motion.li>
-                    <motion.li
-                      className="flex items-start gap-2"
-                      initial={{ x: 20, opacity: 0 }}
-                      animate={inView ? { x: 0, opacity: 1 } : {}}
-                      transition={{ delay: 1.0 }}
-                    >
-                      <span className="text-amber-300">•</span>
-                      <span>Free health checkup included</span>
-                    </motion.li>
+                  <h3 className="text-xl font-bold mb-4">Why Donate Blood?</h3>
+                  <ul className="space-y-3 text-red-100 text-left w-full">
+                    {[
+                      "1 donation can save up to 3 lives",
+                      "Only takes about 10 minutes",
+                      "Helps maintain your own health",
+                      "Free health checkup included",
+                    ].map((item, index) => (
+                      <motion.li
+                        key={index}
+                        className="flex items-start gap-3"
+                        initial={{ x: 20, opacity: 0 }}
+                        animate={inView ? { x: 0, opacity: 1 } : {}}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                      >
+                        <span className="text-amber-300 mt-1">•</span>
+                        <span>{item}</span>
+                      </motion.li>
+                    ))}
                   </ul>
                 </div>
               </motion.div>
             </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Mobile-friendly illustration for smaller screens */}
+      <div className="lg:hidden px-4 pb-12">
+        <motion.div
+          className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg max-w-md mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
+          <div className="flex flex-col items-center text-center">
+            <Droplet className="h-12 w-12 text-red-200 mb-3" />
+            <h3 className="text-lg font-bold mb-3">Why Donate Blood?</h3>
+            <ul className="space-y-2 text-red-100 text-sm text-left w-full">
+              {[
+                "1 donation can save up to 3 lives",
+                "Only takes about 10 minutes",
+                "Helps maintain your own health",
+                "Free health checkup included",
+              ].map((item, index) => (
+                <motion.li
+                  key={index}
+                  className="flex items-start gap-2"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={inView ? { x: 0, opacity: 1 } : {}}
+                  transition={{ delay: 0.7 + index * 0.1 }}
+                >
+                  <span className="text-amber-300">•</span>
+                  <span>{item}</span>
+                </motion.li>
+              ))}
+            </ul>
           </div>
         </motion.div>
       </div>

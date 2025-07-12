@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router";
-import { Bookmark, Edit, Eye, Save, Trash2, Upload } from "lucide-react";
+import {
+  Bookmark,
+  Edit,
+  Eye,
+  Save,
+  Trash2,
+  Upload,
+  ChevronLeft,
+} from "lucide-react";
 import JoditEditor from "jodit-react";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -171,16 +179,16 @@ const EditBlog = () => {
       text: "This action cannot be undone. All comments and associated data will be permanently removed.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
       confirmButtonText: "Delete Permanently",
-      background: "#ffffff dark:bg-gray-800",
+      background: "#ffffff",
       customClass: {
         popup: "dark:bg-gray-800 dark:text-white",
         title: "dark:text-white",
         content: "dark:text-gray-300",
         confirmButton: "hover:bg-red-700 transition-colors",
-        cancelButton: "hover:bg-blue-600 transition-colors",
+        cancelButton: "hover:bg-gray-600 transition-colors",
       },
     });
 
@@ -239,7 +247,7 @@ const EditBlog = () => {
         </h2>
         <button
           onClick={() => navigate("/blogs")}
-          className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition-colors"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           Browse All Blogs
         </button>
@@ -252,68 +260,93 @@ const EditBlog = () => {
   const canEdit = isAdmin || isAuthor;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Edit Blog Post
-        </h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header with breadcrumb */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors mb-4"
+        >
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          Back
+        </button>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => navigate(`/blogs/${id}`)}
-            className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            aria-label="Preview blog"
-          >
-            <Eye className="mr-2 w-4 h-4" />
-            Preview
-          </button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Edit Blog Post
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Last updated: {new Date(blog.updatedAt).toLocaleDateString()}
+            </p>
+          </div>
 
-          {canEdit && (
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={handleDelete}
-              className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              aria-label="Delete blog"
-              disabled={isSubmitting}
+              onClick={() =>
+                navigate(`/dashboard/content-management/blog-preview/${id}`)
+              }
+              className="flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm"
+              aria-label="Preview blog"
             >
-              <Trash2 className="mr-2 w-4 h-4" />
-              Delete
+              <Eye className="mr-2 w-4 h-4" />
+              Preview
             </button>
-          )}
+
+            {canEdit && (
+              <button
+                onClick={handleDelete}
+                className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm"
+                aria-label="Delete blog"
+                disabled={isSubmitting}
+              >
+                <Trash2 className="mr-2 w-4 h-4" />
+                Delete
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Status Badge and Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <span
-          className={`px-3 py-1 rounded-full text-sm font-medium ${
-            blog.status === "published"
-              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-              : blog.status === "draft"
-              ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-          }`}
-        >
-          {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
-        </span>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-medium ${
+              blog.status === "published"
+                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                : blog.status === "draft"
+                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+            }`}
+          >
+            {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
+          </span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            {blog.views} views
+          </span>
+        </div>
 
         {isAdmin && (
           <div className="flex gap-2">
             {blog.status === "draft" ? (
               <button
                 onClick={() => handleStatusChange("published")}
-                className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors"
+                className="px-3 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700 transition-colors flex items-center gap-1"
                 aria-label="Publish blog"
                 disabled={isSubmitting}
               >
+                <Bookmark className="w-3 h-3" />
                 Publish
               </button>
             ) : (
               <button
                 onClick={() => handleStatusChange("draft")}
-                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors flex items-center gap-1"
                 aria-label="Unpublish blog"
                 disabled={isSubmitting}
               >
+                <Bookmark className="w-3 h-3" />
                 Unpublish
               </button>
             )}
@@ -321,14 +354,14 @@ const EditBlog = () => {
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Title Field */}
-        <div className="mb-6">
+        <div>
           <label
             htmlFor="blog-title"
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
-            Title *
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             id="blog-title"
@@ -344,7 +377,7 @@ const EditBlog = () => {
                 message: "Title should not exceed 120 characters",
               },
             })}
-            className={`w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ${
+            className={`w-full px-4 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
               errors.title
                 ? "border-red-500"
                 : "border-gray-300 dark:border-gray-600"
@@ -361,83 +394,90 @@ const EditBlog = () => {
         </div>
 
         {/* Thumbnail Image */}
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Thumbnail Image
           </label>
-          <div className="flex items-center gap-4">
-            {previewImage ? (
-              <div className="relative">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="relative">
+              {previewImage ? (
                 <img
                   src={previewImage}
                   alt="Preview"
-                  className="h-24 w-24 object-cover rounded-md"
+                  className="h-32 w-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                 />
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setPreviewImage("");
-                    }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                    aria-label="Remove image"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            ) : (
-              <img
-                src={blog.thumbnail}
-                alt={blog.title}
-                className="h-24 w-24 object-cover rounded-md"
-                loading="lazy"
-              />
-            )}
+              ) : (
+                <img
+                  src={blog.thumbnail}
+                  alt={blog.title}
+                  className="h-32 w-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                  loading="lazy"
+                />
+              )}
+              {canEdit && previewImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedImage(null);
+                    setPreviewImage("");
+                  }}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors shadow-md"
+                  aria-label="Remove image"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+            </div>
 
             {canEdit && (
-              <label
-                className={`flex flex-col items-center px-4 py-3 rounded-md border-2 border-dashed cursor-pointer transition-colors ${
-                  previewImage
-                    ? "border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-                    : "border-gray-300 dark:border-gray-600 hover:border-amber-500"
-                }`}
-                aria-label="Upload thumbnail image"
-              >
-                <Upload
-                  className={`w-5 h-5 ${
-                    previewImage ? "text-amber-600" : "text-gray-500"
-                  }`}
-                />
-                <span
-                  className={`mt-1 text-sm ${
+              <div className="flex-1">
+                <label
+                  className={`inline-flex flex-col items-center px-4 py-8 rounded-lg border-2 border-dashed cursor-pointer transition-colors w-full ${
                     previewImage
-                      ? "text-amber-600 font-medium"
-                      : "text-gray-600 dark:text-gray-400"
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                      : "border-gray-300 dark:border-gray-600 hover:border-blue-500"
                   }`}
+                  aria-label="Upload thumbnail image"
                 >
-                  {previewImage ? "Change Image" : "Upload New Image"}
-                </span>
-                <input
-                  type="file"
-                  className="hidden"
-                  accept="image/png, image/jpeg, image/webp"
-                  onChange={onImageChange}
-                  disabled={isSubmitting}
-                />
-              </label>
+                  <div className="flex flex-col items-center">
+                    <Upload
+                      className={`w-6 h-6 mb-2 ${
+                        previewImage ? "text-blue-600" : "text-gray-500"
+                      }`}
+                    />
+                    <span
+                      className={`text-sm ${
+                        previewImage
+                          ? "text-blue-600 font-medium"
+                          : "text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {previewImage ? "Change Image" : "Upload New Image"}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      JPEG, PNG or WEBP (5MB max)
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={onImageChange}
+                    disabled={isSubmitting}
+                  />
+                </label>
+              </div>
             )}
           </div>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Recommended size: 1200x630 pixels (max 5MB)
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            Recommended size: 1200x630 pixels (16:9 aspect ratio)
           </p>
         </div>
 
         {/* Content Editor */}
-        <div className="mb-6">
+        <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Content *
+            Content <span className="text-red-500">*</span>
           </label>
           <Controller
             name="content"
@@ -445,7 +485,7 @@ const EditBlog = () => {
             rules={{ validate: (value) => !isContentEmpty(value) }}
             render={({ field }) => (
               <div
-                className={`border rounded-md overflow-hidden ${
+                className={`rounded-md overflow-hidden ${
                   errors.content
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
@@ -463,25 +503,34 @@ const EditBlog = () => {
                       "italic",
                       "underline",
                       "strikethrough",
-                      "link",
+                      "|",
                       "ul",
                       "ol",
-                      "outdent",
-                      "indent",
+                      "|",
                       "font",
                       "fontsize",
                       "paragraph",
+                      "|",
                       "image",
+                      "video",
                       "table",
+                      "link",
+                      "|",
                       "align",
+                      "|",
                       "undo",
                       "redo",
-                      "fullsize",
+                      "|",
+                      "source",
                     ],
                     height: 500,
+                    theme: "dark",
                     style: {
                       fontFamily:
                         "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+                    },
+                    uploader: {
+                      insertImageAsBase64URI: true,
                     },
                   }}
                 />
@@ -490,14 +539,14 @@ const EditBlog = () => {
           />
           {errors.content && (
             <p className="mt-1 text-sm text-red-600">
-              Please provide meaningful blog content
+              Please provide meaningful blog content (at least 100 characters)
             </p>
           )}
         </div>
 
         {/* Form Actions */}
         {canEdit && (
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={() => navigate(`/blogs/${id}`)}
@@ -514,7 +563,7 @@ const EditBlog = () => {
                 isContentEmpty(watch("content")) ||
                 (!selectedImage && !blog.thumbnail)
               }
-              className="flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? "Saving..." : "Save Changes"}

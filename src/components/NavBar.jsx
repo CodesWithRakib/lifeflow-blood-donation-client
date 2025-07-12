@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router";
-
 import {
   Home,
   Droplet,
@@ -18,9 +17,32 @@ import useAuth from "../hooks/useAuth";
 const Navbar = () => {
   const { user, logOut } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const userMenuRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target) &&
+        !event.target.closest(".mobile-menu-button")
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
@@ -30,12 +52,18 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close mobile menu on route change
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsUserMenuOpen(false);
   }, [location]);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
   };
 
   return (
@@ -51,72 +79,88 @@ const Navbar = () => {
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center space-x-2 text-amber-600 dark:text-amber-500"
+            className="flex items-center space-x-2 text-amber-600 dark:text-amber-500 hover:opacity-90 transition-opacity"
           >
             <Droplet className="h-8 w-8" />
             <span className="text-2xl font-bold tracking-tight">Donorly</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
+          <nav className="hidden md:flex items-center space-x-6">
             <Link
               to="/donation-requests"
-              className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
             >
-              <HandHeart className="h-5 w-5" />
-              <span>Donation Requests</span>
+              <span className="flex items-center gap-1">
+                <HandHeart className="h-4 w-4" />
+                Donation Requests
+              </span>
             </Link>
             <Link
               to="/blog"
-              className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+              className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
             >
-              <Newspaper className="h-5 w-5" />
-              <span>Blog</span>
+              <span className="flex items-center gap-1">
+                <Newspaper className="h-4 w-4" />
+                Blog
+              </span>
             </Link>
             {user && (
               <Link
                 to="/funding"
-                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
               >
-                <Droplet className="h-5 w-5" />
-                <span>Funding</span>
+                <span className="flex items-center gap-1">
+                  <Droplet className="h-4 w-4" />
+                  Funding
+                </span>
               </Link>
             )}
 
             {user ? (
-              <div className="relative ml-4">
+              <div className="relative ml-2" ref={userMenuRef}>
                 <button
-                  className="flex items-center space-x-1 focus:outline-none"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={toggleUserMenu}
+                  className="flex items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
                 >
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
                       alt="User Avatar"
-                      className="h-8 w-8 rounded-full object-cover"
+                      className="h-8 w-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                      <User className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                      <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                   )}
                 </button>
 
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none py-1 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {user.displayName || "User"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
                     <Link
                       to="/dashboard"
-                      className=" px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                     >
                       <LayoutDashboard className="h-4 w-4" />
-                      <span>Dashboard</span>
+                      Dashboard
                     </Link>
                     <button
                       onClick={logOut}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
+                      Sign out
                     </button>
                   </div>
                 )}
@@ -124,59 +168,50 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                className="ml-2 px-4 py-2 rounded-md text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 transition-colors flex items-center gap-1"
               >
-                <LogIn className="h-5 w-5" />
-                <span>Login</span>
+                <LogIn className="h-4 w-4" />
+                Login
               </Link>
             )}
           </nav>
 
           {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            {user && (
-              <div className="relative mr-4">
+          <div className="md:hidden flex items-center gap-2">
+            {user ? (
+              <div className="relative" ref={userMenuRef}>
                 <button
-                  className="flex items-center space-x-1 focus:outline-none"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  onClick={toggleUserMenu}
+                  className="flex items-center justify-center rounded-full focus:outline-none"
                 >
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
                       alt="User Avatar"
-                      className="h-8 w-8 rounded-full object-cover"
+                      className="h-8 w-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
                     />
                   ) : (
-                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                      <User className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                      <User className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     </div>
                   )}
                 </button>
-
-                {isMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
-                    <Link
-                      to="/dashboard"
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <LayoutDashboard className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
-                    <button
-                      onClick={logOut}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                )}
               </div>
+            ) : (
+              <Link
+                to="/login"
+                className="p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500"
+              >
+                <LogIn className="h-5 w-5" />
+              </Link>
             )}
+
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 focus:outline-none"
+              className="mobile-menu-button inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 focus:outline-none"
+              aria-expanded={isMenuOpen}
             >
+              <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
               ) : (
@@ -189,6 +224,7 @@ const Navbar = () => {
 
       {/* Mobile Navigation */}
       <div
+        ref={mobileMenuRef}
         className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
           isMenuOpen ? "max-h-screen" : "max-h-0"
         }`}
@@ -196,41 +232,57 @@ const Navbar = () => {
         <div className="px-2 pt-2 pb-4 space-y-1 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
           <Link
             to="/"
-            className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
           >
             <Home className="h-5 w-5" />
-            <span>Home</span>
+            Home
           </Link>
           <Link
             to="/donation-requests"
-            className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
           >
             <HandHeart className="h-5 w-5" />
-            <span>Donation Requests</span>
+            Donation Requests
           </Link>
           <Link
             to="/blog"
-            className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
           >
             <Newspaper className="h-5 w-5" />
-            <span>Blog</span>
+            Blog
           </Link>
           {user && (
-            <Link
-              to="/funding"
-              className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <Droplet className="h-5 w-5" />
-              <span>Funding</span>
-            </Link>
+            <>
+              <Link
+                to="/funding"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+              >
+                <Droplet className="h-5 w-5" />
+                Funding
+              </Link>
+              <Link
+                to="/dashboard"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+              >
+                <LayoutDashboard className="h-5 w-5" />
+                Dashboard
+              </Link>
+              <button
+                onClick={logOut}
+                className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+              >
+                <LogOut className="h-5 w-5" />
+                Sign out
+              </button>
+            </>
           )}
           {!user && (
             <Link
               to="/login"
-              className="flex items-center space-x-2 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-500 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="block px-3 py-2 rounded-md text-base font-medium text-white bg-amber-600 hover:bg-amber-700 flex items-center gap-2 justify-center"
             >
               <LogIn className="h-5 w-5" />
-              <span>Login</span>
+              Login
             </Link>
           )}
         </div>

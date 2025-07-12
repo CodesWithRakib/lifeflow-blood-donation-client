@@ -6,45 +6,10 @@ import {
   CalendarCheck,
   Award,
   ShieldCheck,
+  Users,
+  Clock,
+  Activity,
 } from "lucide-react";
-import FeatureCard from "../../components/home/FeatureCard";
-
-const features = [
-  {
-    icon: <HeartPulse className="w-10 h-10" />,
-    title: "Save Lives",
-    description:
-      "Each donation can help up to 3 people in need of blood transfusions.",
-    color: "text-red-500",
-  },
-  {
-    icon: <CalendarCheck className="w-10 h-10" />,
-    title: "Easy Scheduling",
-    description:
-      "Book appointments at nearby blood banks with our simple scheduling system.",
-    color: "text-amber-500",
-  },
-  {
-    icon: <Droplet className="w-10 h-10" />,
-    title: "Track Donations",
-    description:
-      "Monitor your donation history and see the impact you've made.",
-    color: "text-blue-500",
-  },
-  {
-    icon: <ShieldCheck className="w-10 h-10" />,
-    title: "Safety First",
-    description:
-      "All centers follow strict safety protocols for your protection.",
-    color: "text-emerald-500",
-  },
-  {
-    icon: <Award className="w-10 h-10" />,
-    title: "Earn Badges",
-    description: "Get recognized for your donations with our reward system.",
-    color: "text-purple-500",
-  },
-];
 
 const FeaturedSection = () => {
   const [ref, inView] = useInView({
@@ -52,51 +17,156 @@ const FeaturedSection = () => {
     threshold: 0.1,
   });
 
+  const features = [
+    {
+      icon: <HeartPulse className="w-8 h-8" />,
+      title: "Life-Saving Impact",
+      description:
+        "Each donation can save up to 3 lives in emergency situations.",
+      stats: "10,000+ lives saved",
+      color: "text-red-500",
+      bgColor: "bg-red-50 dark:bg-red-900/20",
+    },
+    {
+      icon: <Users className="w-8 h-8" />,
+      title: "Growing Community",
+      description:
+        "Join our network of 50,000+ registered donors across the country.",
+      stats: "500+ new donors weekly",
+      color: "text-blue-500",
+      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+      icon: <CalendarCheck className="w-8 h-8" />,
+      title: "Easy Scheduling",
+      description:
+        "Book appointments at 200+ partner centers with our mobile app.",
+      stats: "95% satisfaction rate",
+      color: "text-amber-500",
+      bgColor: "bg-amber-50 dark:bg-amber-900/20",
+    },
+    {
+      icon: <ShieldCheck className="w-8 h-8" />,
+      title: "Safety Certified",
+      description:
+        "All centers follow WHO safety protocols with sterile equipment.",
+      stats: "100% safety record",
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+      icon: <Clock className="w-8 h-8" />,
+      title: "Quick Process",
+      description:
+        "Complete your donation in just 30-45 minutes including screening.",
+      stats: "Under 10 min donation",
+      color: "text-purple-500",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+    },
+    {
+      icon: <Activity className="w-8 h-8" />,
+      title: "Health Benefits",
+      description:
+        "Regular donation reduces risk of heart disease and burns calories.",
+      stats: "650 calories per donation",
+      color: "text-rose-500",
+      bgColor: "bg-rose-50 dark:bg-rose-900/20",
+    },
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+  };
+
   return (
-    <section className="py-16 md:py-24 bg-gray-50 dark:bg-gray-900 relative overflow-hidden">
+    <section className="py-16 md:py-24 bg-white dark:bg-gray-900 relative overflow-hidden">
       {/* Decorative elements */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-5">
-        <div className="absolute top-20 left-10 w-40 h-40 bg-red-400 rounded-full filter blur-3xl"></div>
-        <div className="absolute bottom-10 right-10 w-60 h-60 bg-amber-400 rounded-full filter blur-3xl"></div>
+      <div className="absolute inset-0 overflow-hidden opacity-5">
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-red-400 rounded-full filter blur-3xl"></div>
+        <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-amber-400 rounded-full filter blur-3xl"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div
           ref={ref}
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.8 }}
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          variants={containerVariants}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 mb-4">
+          <motion.div
+            variants={itemVariants}
+            className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200 mb-6"
+          >
             <Droplet className="w-4 h-4 mr-2" />
-            Why Donate With Us
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Transforming Donations Into{" "}
-            <span className="text-red-600 dark:text-red-500">Lifesaving</span>{" "}
-            Actions
-          </h2>
-          <p className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-300">
-            Our platform makes blood donation simple, rewarding, and impactful.
-            Join thousands of donors making a difference.
-          </p>
+            Why Choose Donorly
+          </motion.div>
+
+          <motion.h2
+            variants={itemVariants}
+            className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-5"
+          >
+            The{" "}
+            <span className="text-red-600 dark:text-red-500">Most Trusted</span>{" "}
+            Blood Donation Platform
+          </motion.h2>
+
+          <motion.p
+            variants={itemVariants}
+            className="max-w-3xl mx-auto text-lg md:text-xl text-gray-600 dark:text-gray-300"
+          >
+            We connect donors with those in need through innovative technology
+            and a compassionate community.
+          </motion.p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.slice(0, 3).map((feature, index) => (
-            <FeatureCard key={feature.title} index={index} {...feature} />
-          ))}
-        </div>
-
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 lg:w-4/5 lg:mx-auto"
+          initial="hidden"
+          animate={inView ? "visible" : "hidden"}
+          variants={containerVariants}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {features.slice(3).map((feature, index) => (
-            <FeatureCard key={feature.title} index={index + 3} {...feature} />
+          {features.map((feature, index) => (
+            <motion.div
+              key={index}
+              variants={itemVariants}
+              whileHover={{ y: -5 }}
+              className={`p-6 rounded-xl ${feature.bgColor} border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300`}
+            >
+              <div
+                className={`w-12 h-12 rounded-lg ${feature.bgColor} flex items-center justify-center mb-4`}
+              >
+                <div className={feature.color}>{feature.icon}</div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                {feature.title}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-3">
+                {feature.description}
+              </p>
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {feature.stats}
+              </p>
+            </motion.div>
           ))}
         </motion.div>
 
@@ -106,15 +176,15 @@ const FeaturedSection = () => {
           transition={{ delay: 0.6 }}
           className="mt-16 text-center"
         >
-          <div className="inline-flex items-center px-6 py-3 rounded-full text-white bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 transition-colors duration-300 shadow-lg font-medium">
-            <HeartPulse className="w-5 h-5 mr-2" />
-            Become a Regular Donor
-          </div>
+          <button className="inline-flex items-center px-8 py-4 rounded-full text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg">
+            <HeartPulse className="w-5 h-5 mr-3" />
+            Join Our Donor Community
+          </button>
         </motion.div>
       </div>
 
       {/* Blood drop pattern */}
-      <div className="absolute -bottom-20 -right-20 w-64 h-64 opacity-10">
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 opacity-5 dark:opacity-10">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path
             fill="currentColor"

@@ -12,12 +12,18 @@ import {
   Filter,
   Search,
   Hospital,
+  Edit,
+  Trash,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import axios from "axios";
+import useRole from "../../hooks/useRole";
 
 const DonationRequests = () => {
   useTitle("Donation Requests");
   const { user } = useAuth();
+  const { role } = useRole();
   const navigate = useNavigate();
   const axiosSecure = useAxios();
 
@@ -30,7 +36,7 @@ const DonationRequests = () => {
     totalPages: 1,
   });
   const [filters, setFilters] = useState({
-    status: "pending",
+    status: "",
     bloodGroup: "",
     district: "",
     upazila: "",
@@ -79,7 +85,7 @@ const DonationRequests = () => {
     };
 
     fetchRequests();
-  }, [filters, pagination.page]); // pagination.page is enough
+  }, [filters, pagination.page]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -109,6 +115,34 @@ const DonationRequests = () => {
     }
   };
 
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await axiosSecure.patch(`/api/donation-requests/status/${id}`, {
+        status: newStatus,
+      });
+      
+      setRequests(prev => prev.map(req => 
+        req._id === id ? { ...req, status: newStatus } : req
+      ));
+      
+      toast.success(`Status updated to ${newStatus}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update status");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axiosSecure.delete(`/api/donation-requests/${id}`);
+      setRequests(prev => prev.filter(req => req._id !== id));
+      toast.success("Request deleted successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete request");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -122,7 +156,7 @@ const DonationRequests = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h1 className="text-2xl font-bold text-amber-600 dark:text-amber-500">
-            Donation Requests
+            {role === 'admin' ? 'All Donation Requests' : 'Donation Requests'}
           </h1>
 
           <div className="flex gap-3 w-full md:w-auto">
@@ -167,6 +201,7 @@ const DonationRequests = () => {
                   onChange={handleFilterChange}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
                 >
+                  <option value="">All Statuses</option>
                   <option value="pending">Pending</option>
                   <option value="inprogress">In Progress</option>
                   <option value="done">Done</option>
@@ -297,18 +332,61 @@ const DonationRequests = () => {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleView(req._id)}
-                      className="mt-4 w-full py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-800 text-white rounded-lg transition-colors"
-                    >
-                      View Details
-                    </button>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleView(req._id)}
+                        className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-700 dark:hover:bg-amber-800 text-white rounded-lg transition-colors"
+                      >
+                        View Details
+                      </button>
+
+                      {role === 'admin' && (
+                        <>
+                          <button
+                            onClick={() => navigate(`/edit-donation/${req._id}`)}
+                            className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(req._id)}
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash size={18} />
+                          </button>
+                        </>
+                      )}
+
+                      {role === 'volunteer' && (
+                        <>
+                          {req.status === 'inprogress' && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(req._id, 'done')}
+                                className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                                title="Mark as completed"
+                              >
+                                <CheckCircle size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(req._id, 'canceled')}
+                                className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                                title="Cancel request"
+                              >
+                                <XCircle size={18} />
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-center mt-8">
                 <nav className="flex items-center gap-1">

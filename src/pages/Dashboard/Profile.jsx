@@ -6,18 +6,19 @@ import useAxios from "../../hooks/useAxios";
 import useAuth from "../../hooks/useAuth";
 import uploadImageToImageBB from "../../utils/imageUpload";
 import { useQuery } from "@tanstack/react-query";
+import getUserByEmail from "../../utils/getUserByemail";
 
 const Profile = () => {
   const { user: authUser, updateUser } = useAuth();
+  const axiosSecure = useAxios();
+
   const [editMode, setEditMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [districts, setDistricts] = useState([]);
   const [upazilas, setUpazilas] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const axiosSecure = useAxios();
-  // Initialize form data with default values
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -27,44 +28,49 @@ const Profile = () => {
     bloodGroup: "",
   });
 
-  const { data: userData, refetch } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
-      const { data } = await axiosSecure.get(`/api/user`);
-      return data.data;
-    },
+  const {
+    data: userData,
+    isLoading: userQueryLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["user", authUser?.email],
+    queryFn: () => getUserByEmail(axiosSecure),
+    enabled: !!authUser?.email,
   });
 
-  // Fetch user data and location data
+  // Fetch location data only once
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchLocationData = async () => {
       try {
-        // Fetch location data
         const [districtRes, upazilaRes] = await Promise.all([
           axios("/districts.json"),
           axios("/upazilas.json"),
         ]);
-
-        setDistricts(districtRes?.data);
-        setUpazilas(upazilaRes?.data);
-        setFormData({
-          name: userData.name || authUser.displayName || "",
-          email: authUser.email || "",
-          avatar: userData.avatar || authUser.photoURL || "",
-          district: userData.district || "",
-          upazila: userData.upazila || "",
-          bloodGroup: userData.bloodGroup || "",
-        });
+        setDistricts(districtRes.data);
+        setUpazilas(upazilaRes.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Failed to load profile data");
-      } finally {
-        setIsLoading(false);
+        console.error("Error loading location data:", error);
+        toast.error("Failed to load location data");
       }
     };
 
-    fetchData();
-  }, [authUser, userData]);
+    fetchLocationData();
+  }, []);
+
+  // Update form data when userData is fetched
+  useEffect(() => {
+    if (userData && authUser) {
+      setFormData({
+        name: userData.name || authUser.displayName || "",
+        email: authUser.email || "",
+        avatar: userData.avatar || authUser.photoURL || "",
+        district: userData.district || "",
+        upazila: userData.upazila || "",
+        bloodGroup: userData.bloodGroup || "",
+      });
+      setIsLoading(false);
+    }
+  }, [userData, authUser]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -72,15 +78,16 @@ const Profile = () => {
   };
 
   const handleCancel = () => {
-    // Reset form to original user data
-    setFormData({
-      name: authUser.displayName || "",
-      email: authUser.email || "",
-      avatar: authUser.photoURL || "",
-      district: formData.district,
-      upazila: formData.upazila,
-      bloodGroup: formData.bloodGroup,
-    });
+    if (userData && authUser) {
+      setFormData({
+        name: userData.name || authUser.displayName || "",
+        email: authUser.email || "",
+        avatar: userData.avatar || authUser.photoURL || "",
+        district: userData.district || "",
+        upazila: userData.upazila || "",
+        bloodGroup: userData.bloodGroup || "",
+      });
+    }
     setEditMode(false);
   };
 
@@ -103,8 +110,7 @@ const Profile = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      // Update in backend
-      await axiosSecure.patch(`/api/users/${authUser.email}`, {
+      await axiosSecure.patch(`/api/user/${authUser.email}`, {
         name: formData.name,
         avatar: formData.avatar,
         district: formData.district,
@@ -112,7 +118,7 @@ const Profile = () => {
         bloodGroup: formData.bloodGroup,
       });
 
-      // Update in auth context if name/avatar changed
+      // If avatar or name changed, update Firebase profile too
       if (
         formData.name !== authUser.displayName ||
         formData.avatar !== authUser.photoURL
@@ -127,7 +133,7 @@ const Profile = () => {
       refetch();
       setEditMode(false);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Update failed:", error);
       toast.error("Failed to update profile");
     } finally {
       setIsSaving(false);
@@ -141,8 +147,7 @@ const Profile = () => {
           districts.find((d) => d.name === formData.district).id
       )
     : [];
-
-  if (isLoading) {
+  if (isLoading || userQueryLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
