@@ -6,13 +6,11 @@ import {
   Trash,
   CheckCircle,
   XCircle,
-  Clock,
   Droplet,
   MapPin,
   User as UserIcon,
   DollarSign,
   Users,
-  Shield,
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { format } from "date-fns";
@@ -52,12 +50,14 @@ const DashboardHome = () => {
     }
   }, [axiosSecure, isDonor, user?.email]);
 
+  console.log(isDonor);
+
   // Fetch stats for Admin & Volunteer
   const { data: stats = {} } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const res = await axiosSecure.get("/api/dashboard/stats");
-      return res.data.data;
+      const res = await axiosSecure.get("/api/funds");
+      return res.data.stats; // ✅ fixed: use stats, not data
     },
     enabled: isAdmin || isVolunteer,
   });
@@ -171,21 +171,25 @@ const DashboardHome = () => {
             <Users className="w-8 h-8 text-amber-500" />
             <div>
               <p className="text-sm text-gray-500">Total Donors</p>
-              <h4 className="text-xl font-bold">{stats.totalUsers || 0}</h4>
+              <h4 className="text-xl font-bold">{stats.totalDonors || 0}</h4>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow flex items-center gap-4">
             <DollarSign className="w-8 h-8 text-green-500" />
             <div>
               <p className="text-sm text-gray-500">Total Funding</p>
-              <h4 className="text-xl font-bold">৳ {stats.totalFunding || 0}</h4>
+              <h4 className="text-xl font-bold">
+                ৳ {stats.totalFunds?.toLocaleString() || 0}
+              </h4>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow flex items-center gap-4">
             <Droplet className="w-8 h-8 text-red-500" />
             <div>
-              <p className="text-sm text-gray-500">Donation Requests</p>
-              <h4 className="text-xl font-bold">{stats.totalRequests || 0}</h4>
+              <p className="text-sm text-gray-500">Recent Donation</p>
+              <h4 className="text-xl font-bold">
+                ৳ {stats.recentAmount?.toLocaleString() || 0}
+              </h4>
             </div>
           </div>
         </div>

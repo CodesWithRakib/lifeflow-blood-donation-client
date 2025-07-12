@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Loader2, CreditCard, DollarSign } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { motion, AnimatePresence } from "motion/react";
 import useAxios from "../../hooks/useAxios";
 
-const GiveFundModal = ({ onFundSubmit, onClose, user }) => {
+const GiveFundModal = ({ onFundSubmit, onClose, user, onSuccess }) => {
   const [amount, setAmount] = useState("");
   const [processing, setProcessing] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -12,7 +13,34 @@ const GiveFundModal = ({ onFundSubmit, onClose, user }) => {
   const elements = useElements();
   const axiosSecure = useAxios();
 
-  // Detect theme change (tailwind "dark" class)
+  // Animation variants
+  const backdrop = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
+    exit: { opacity: 0 },
+  };
+
+  const modal = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring",
+        damping: 25,
+        stiffness: 500,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: 20,
+      transition: {
+        duration: 0.2,
+      },
+    },
+  };
+
+  // Detect theme change
   useEffect(() => {
     const updateTheme = () => {
       setIsDarkMode(document.documentElement.classList.contains("dark"));
@@ -31,8 +59,9 @@ const GiveFundModal = ({ onFundSubmit, onClose, user }) => {
   const cardStyle = {
     style: {
       base: {
-        fontSize: "16px",
         color: isDarkMode ? "#F3F4F6" : "#374151",
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "16px",
         "::placeholder": {
           color: isDarkMode ? "#9CA3AF" : "#6B7280",
         },
@@ -41,147 +70,182 @@ const GiveFundModal = ({ onFundSubmit, onClose, user }) => {
         color: "#EF4444",
       },
     },
+    hidePostalCode: true,
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     const numericAmount = parseFloat(amount);
     if (!numericAmount || numericAmount < 1) {
       toast.error("Please enter a valid amount (minimum $1)");
       return;
     }
 
-    setProcessing(true);
-
-    const { clientSecret } = await onFundSubmit(numericAmount);
-    if (!clientSecret || !stripe || !elements) {
-      setProcessing(false);
+    if (!stripe || !elements) {
+      toast.error("Payment system not ready. Please try again.");
       return;
     }
 
-    const result = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: elements.getElement(CardElement),
-        billing_details: {
-          email: user?.email,
-        },
-      },
-    });
+    setProcessing(true);
+    let paymentSucceeded = false;
 
-    if (result.error) {
-      toast.error(result.error.message);
-    } else if (result.paymentIntent.status === "succeeded") {
-      toast.success("Donation successful! Thank you for your generosity.");
-
-      try {
-        await axiosSecure.post("/api/funds", {
-          userEmail: user?.email,
-          userName: user?.displayName,
-          amount: numericAmount,
-          currency: "usd",
-          paymentIntentId: result.paymentIntent.id,
-        });
-      } catch (err) {
-        console.error("Failed to save donation record:", err);
+    try {
+      // Step 1: Initialize payment
+      const result = await onFundSubmit(numericAmount);
+      if (!result?.clientSecret) {
+        throw new Error("Payment initialization failed");
       }
 
-      onClose();
-    }
+      // Step 2: Confirm card payment
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
+        result.clientSecret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: user?.displayName || "Anonymous Donor",
+              email: user?.email,
+            },
+          },
+        }
+      );
 
-    setProcessing(false);
+      if (error) throw error;
+
+      // Step 3: Record payment in database
+      if (paymentIntent.status === "succeeded") {
+        await axiosSecure.post("/api/funds", {
+          userEmail: user?.email,
+          userName: user?.displayName || "Anonymous",
+          amount: numericAmount,
+          currency: "usd",
+          paymentIntentId: paymentIntent.id,
+        });
+
+        paymentSucceeded = true;
+        toast.success("Donation successful! Thank you for your generosity.");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      if (!paymentSucceeded) {
+        // Only show error if payment didn't succeed
+        toast.error(error.message || "Payment failed. Please try again.");
+      }
+    } finally {
+      setProcessing(false);
+      if (paymentSucceeded) {
+        try {
+          await onSuccess(); // Call onSuccess only after everything else is done
+        } catch (successError) {
+          console.error("Success callback error:", successError);
+        }
+        onClose();
+      }
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl w-full max-w-md relative shadow-xl transition-all duration-300 transform">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors duration-200"
-          aria-label="Close modal"
+    <AnimatePresence>
+      <motion.div
+        key="backdrop"
+        variants={backdrop}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          key="modal"
+          variants={modal}
+          className="relative bg-white dark:bg-gray-800 rounded-xl w-full max-w-md shadow-xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
         >
-          <X className="w-6 h-6" />
-        </button>
-
-        <div className="space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-1">
-              Make a Donation
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 text-sm">
-              Support our cause with your generous contribution
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="amount"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Amount (USD)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                $
-              </span>
-              <input
-                id="amount"
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="w-full pl-8 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
-                min="1"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Payment Details
-            </label>
-            <div className="p-4 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700">
-              <CardElement options={cardStyle} />
-            </div>
-          </div>
-
           <button
-            onClick={handleSubmit}
-            disabled={processing || !stripe}
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
-              processing ? "opacity-75 cursor-not-allowed" : ""
-            }`}
+            onClick={onClose}
+            className="absolute top-4 right-4 p-1 rounded-full text-gray-500 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+            aria-label="Close modal"
           >
-            {processing ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Processing...
-              </span>
-            ) : (
-              "Donate Now"
-            )}
+            <X className="w-5 h-5" />
           </button>
-        </div>
-      </div>
-    </div>
+
+          <div className="p-6">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/50 mb-3">
+                <DollarSign className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Support Our Cause
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Your donation helps us continue our important work
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  Donation Amount (USD)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 dark:text-gray-400">$</span>
+                  </div>
+                  <input
+                    id="amount"
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="block w-full pl-8 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                    min="1"
+                    step="0.01"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Card Details
+                </label>
+                <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                  <CardElement options={cardStyle} className="p-2" />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={processing || !stripe}
+                className={`w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-gray-800 transition-all ${
+                  processing ? "opacity-80 cursor-not-allowed" : ""
+                }`}
+              >
+                {processing ? (
+                  <>
+                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="-ml-1 mr-2 h-4 w-4" />
+                    Donate Now
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">
+              <p>Secure payment powered by Stripe</p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
