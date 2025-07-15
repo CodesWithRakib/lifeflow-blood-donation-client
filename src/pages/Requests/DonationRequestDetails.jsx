@@ -1,0 +1,321 @@
+import { useParams, useNavigate } from "react-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import Swal from "sweetalert2";
+import { format } from "date-fns";
+import {
+  FaUser,
+  FaTint,
+  FaMapMarkerAlt,
+  FaHospital,
+  FaClock,
+  FaCalendarAlt,
+  FaEnvelopeOpenText,
+  FaInfoCircle,
+  FaHandsHelping,
+  FaNotesMedical,
+} from "react-icons/fa";
+import useAxios from "../../hooks/useAxios";
+import useAuth from "../../hooks/useAuth";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import ErrorMessage from "../../components/common/ErrorMessage";
+import BloodDropIcon from "../../components/common/BloodDropIcon";
+
+const DonationRequestDetails = () => {
+  const { id } = useParams();
+  const axiosSecure = useAxios();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const {
+    data: request,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["donation-details", id],
+    queryFn: async () => {
+      const { data } = await axiosSecure.get(`/donations/${id}`);
+      return data?.data;
+    },
+    retry: 2,
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (donationInfo) => {
+      const res = await axiosSecure.patch(
+        `/donations/donate/${id}`,
+        donationInfo
+      );
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Donation confirmed!");
+      navigate("/dashboard/my-donations");
+    },
+    onError: (error) => {
+      toast.error(
+        error.response?.data?.message || "Failed to confirm donation"
+      );
+    },
+  });
+
+  const handleDonate = () => {
+    if (!user) {
+      return toast.error("Please login to donate");
+    }
+
+    if (!request) return;
+
+    if (request.status !== "pending") {
+      return toast.error("This request is no longer available for donation.");
+    }
+    if (request.requesterEmail === user?.email) {
+      return toast.error("You cannot donate to your own request.");
+    }
+
+    Swal.fire({
+      title: "Confirm Your Donation",
+      html: `
+        <div class="text-left">
+          <p class="mb-2">You're about to donate for:</p>
+          <p class="font-semibold">${request.recipientName}</p>
+          <p class="text-sm text-gray-600">${request.hospitalName}</p>
+          <div class="mt-4 p-3 bg-amber-50 rounded-lg">
+            <p class="text-sm font-medium text-amber-800">Please ensure you meet all donation requirements before proceeding.</p>
+          </div>
+        </div>
+      `,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#E53E3E",
+      cancelButtonColor: "#4B5563",
+      confirmButtonText: "Yes, I'll donate",
+      cancelButtonText: "Cancel",
+      focusConfirm: false,
+      customClass: {
+        popup: "rounded-xl",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        mutation.mutate({
+          donorName: user?.displayName,
+          donorEmail: user?.email,
+          status: "inprogress",
+        });
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <ErrorMessage
+          message={error.message || "Failed to load donation details"}
+          onRetry={() => window.location.reload()}
+        />
+      </div>
+    );
+  }
+
+  if (!request) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 text-center">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-8">
+          <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
+            Donation Request Not Found
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            The requested donation details could not be found or may have been
+            removed.
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 transition"
+          >
+            Back to Previous Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+      <div className="bg-gradient-to-r from-red-50 to-amber-50 dark:from-gray-800 dark:to-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+        {/* Header */}
+        <div className="bg-red-600 dark:bg-red-800 px-6 py-4 flex items-center">
+          <BloodDropIcon className="w-10 h-10 text-white mr-3" />
+          <div>
+            <h2 className="text-2xl font-bold text-white">
+              Blood Donation Request
+            </h2>
+            <p className="text-red-100">
+              {request.bloodGroup} • {request.recipientDistrict}
+            </p>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="p-6 sm:p-8">
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
+              Recipient Information
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Please review all details carefully before donating.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DetailCard
+              icon={<FaUser className="text-red-500" />}
+              title="Recipient"
+              value={request.recipientName}
+              className="bg-white dark:bg-gray-700"
+            />
+            <DetailCard
+              icon={<FaTint className="text-red-500" />}
+              title="Blood Group"
+              value={
+                <span className="font-bold text-red-600 dark:text-red-400">
+                  {request.bloodGroup}
+                </span>
+              }
+              className="bg-white dark:bg-gray-700"
+            />
+            <DetailCard
+              icon={<FaHospital className="text-amber-500" />}
+              title="Hospital"
+              value={request.hospitalName}
+              className="bg-white dark:bg-gray-700"
+            />
+            <DetailCard
+              icon={<FaMapMarkerAlt className="text-blue-500" />}
+              title="Location"
+              value={`${request.recipientUpazila}, ${request.recipientDistrict}`}
+              className="bg-white dark:bg-gray-700"
+            />
+            <DetailCard
+              icon={<FaCalendarAlt className="text-green-500" />}
+              title="Date & Time"
+              value={`${format(new Date(request.date), "PPP")} at ${
+                request.time
+              }`}
+              className="bg-white dark:bg-gray-700"
+            />
+            <DetailCard
+              icon={<FaNotesMedical className="text-purple-500" />}
+              title="Status"
+              value={
+                <span
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                    ${
+                      request.status === "pending"
+                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                        : request.status === "inprogress"
+                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    }
+                  `}
+                >
+                  {request.status.charAt(0).toUpperCase() +
+                    request.status.slice(1)}
+                </span>
+              }
+              className="bg-white dark:bg-gray-700"
+            />
+          </div>
+
+          {request.fullAddress && (
+            <DetailCard
+              icon={<FaMapMarkerAlt className="text-blue-500" />}
+              title="Full Address"
+              value={request.fullAddress}
+              className="mt-6 bg-white dark:bg-gray-700"
+            />
+          )}
+
+          <DetailCard
+            icon={<FaEnvelopeOpenText className="text-gray-500" />}
+            title="Additional Message"
+            value={request.message || "No additional message provided."}
+            className="mt-6 bg-gray-50 dark:bg-gray-700"
+          />
+
+          {request.status === "pending" && (
+            <div className="mt-10 flex flex-col sm:flex-row justify-end gap-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleDonate}
+                disabled={mutation.isLoading}
+                className="px-6 py-3 bg-gradient-to-r from-red-600 to-amber-600 rounded-lg text-white font-medium hover:from-red-700 hover:to-amber-700 transition disabled:opacity-70 flex items-center justify-center gap-2"
+              >
+                {mutation.isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <FaHandsHelping /> Donate Now
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DetailCard = ({ icon, title, value, className = "" }) => (
+  <div
+    className={`p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 ${className}`}
+  >
+    <div className="flex items-start gap-4">
+      <div className="p-3 bg-gray-100 dark:bg-gray-600 rounded-lg">{icon}</div>
+      <div>
+        <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+          {title}
+        </h4>
+        <p className="text-base text-gray-800 dark:text-gray-200">{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+export default DonationRequestDetails;

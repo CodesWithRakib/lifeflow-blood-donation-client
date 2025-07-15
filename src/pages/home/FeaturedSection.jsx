@@ -4,7 +4,6 @@ import {
   Droplet,
   HeartPulse,
   CalendarCheck,
-  Award,
   ShieldCheck,
   Users,
   Clock,
@@ -33,8 +32,8 @@ const FeaturedSection = () => {
       description:
         "Join our network of 50,000+ registered donors across the country.",
       stats: "500+ new donors weekly",
-      color: "text-blue-500",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
     },
     {
       icon: <CalendarCheck className="w-8 h-8" />,
@@ -51,17 +50,17 @@ const FeaturedSection = () => {
       description:
         "All centers follow WHO safety protocols with sterile equipment.",
       stats: "100% safety record",
-      color: "text-emerald-500",
-      bgColor: "bg-emerald-50 dark:bg-emerald-900/20",
+      color: "text-green-500",
+      bgColor: "bg-green-50 dark:bg-green-900/20",
     },
     {
       icon: <Clock className="w-8 h-8" />,
       title: "Quick Process",
       description:
-        "Complete your donation in just 30-45 minutes including screening.",
+        "Complete your donation in just 30–45 minutes including screening.",
       stats: "Under 10 min donation",
-      color: "text-purple-500",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      color: "text-gray-700",
+      bgColor: "bg-gray-50 dark:bg-gray-800/20",
     },
     {
       icon: <Activity className="w-8 h-8" />,
@@ -69,8 +68,8 @@ const FeaturedSection = () => {
       description:
         "Regular donation reduces risk of heart disease and burns calories.",
       stats: "650 calories per donation",
-      color: "text-rose-500",
-      bgColor: "bg-rose-50 dark:bg-rose-900/20",
+      color: "text-green-500",
+      bgColor: "bg-green-50 dark:bg-green-900/20",
     },
   ];
 
@@ -99,7 +98,7 @@ const FeaturedSection = () => {
 
   return (
     <section className="py-16 md:py-24 bg-white dark:bg-gray-900 relative overflow-hidden">
-      {/* Decorative elements */}
+      {/* Decorative blur blobs */}
       <div className="absolute inset-0 overflow-hidden opacity-5">
         <div className="absolute top-1/4 -left-20 w-80 h-80 bg-red-400 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-amber-400 rounded-full filter blur-3xl"></div>
@@ -139,6 +138,7 @@ const FeaturedSection = () => {
           </motion.p>
         </motion.div>
 
+        {/* Feature Cards */}
         <motion.div
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
@@ -170,20 +170,24 @@ const FeaturedSection = () => {
           ))}
         </motion.div>
 
+        {/* CTA Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.6 }}
           className="mt-16 text-center"
         >
-          <button className="inline-flex items-center px-8 py-4 rounded-full text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg">
+          <button
+            className="inline-flex items-center px-8 py-4 rounded-full text-white font-poppins bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg hover:scale-105"
+            aria-label="Join Our Donor Community"
+          >
             <HeartPulse className="w-5 h-5 mr-3" />
             Join Our Donor Community
           </button>
         </motion.div>
       </div>
 
-      {/* Blood drop pattern */}
+      {/* Decorative blood pattern SVG */}
       <div className="absolute -bottom-40 -right-40 w-96 h-96 opacity-5 dark:opacity-10">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path

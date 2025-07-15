@@ -1,72 +1,82 @@
-import Root from "../layouts/Root";
 import { createBrowserRouter } from "react-router";
-import Home from "../pages/home/Home";
-import Register from "../pages/registration/Register";
-import Error from "../pages/error/Error";
-import Login from "../pages/login/LogIn";
-import SearchPage from "../pages/search/SearchPage";
-import PrivateRoute from "../auth/PrivateRoute";
-import DonationRequests from "../pages/Donation/DonationRequests";
-import AboutUs from "../pages/about/AboutUs";
-import FAQ from "../pages/Faq/FAQ";
-import TermsOfService from "../pages/Terms/TermsOfService";
-import AdminDashboard from "../pages/Dashboard/Admin/AdminDashboard";
-import Profile from "../pages/Dashboard/Profile";
-import ContactUs from "../pages/home/ContactUs";
-import Blogs from "../pages/Blogs/Blogs";
-import AdminRoute from "../auth/AdminRoute";
-import DashboardHome from "../pages/Dashboard/DashboardHome";
-import MyDonationRequests from "../pages/Dashboard/MydonationRequests";
-import CreateDonationRequest from "../components/form/CreateDonationRequest";
-import DonationRequestDetails from "../pages/Donation/DonationRequestDetails";
-import Funding from "../pages/Funding/Funding";
-import AllUsers from "../pages/Dashboard/users/AllUsers";
-import ContentManagement from "../pages/Dashboard/ContentManagement";
-import AddBlog from "../pages/Dashboard/AddBlog";
-import EditBlog from "../pages/Dashboard/EditBlog";
-import BlogDetails from "../pages/Blogs/BlogDetails";
-import Dashboard from "../layouts/Dashboard";
-import EditDonationRequest from "../components/form/EditDonationRequest";
-import BlogPreview from "../pages/Blogs/BlogPreview";
-import Privacy from "../pages/Privacy/Privacy";
 
-export const router = createBrowserRouter([
+// Layouts
+import MainLayout from "../layouts/MainLayout";
+import DashboardLayout from "../layouts/DashboardLayout";
+
+// Public Pages
+import Home from "../pages/home/Home";
+import Blogs from "../pages/Blogs/Blogs";
+import BlogPreview from "../pages/Blogs/BlogPreview";
+import Funding from "../pages/Funding/Funding";
+import SearchPage from "../pages/Donors/SearchPage";
+import DonationRequestsPublic from "../pages/Requests/DonationRequestsPublic";
+import DonationRequestDetails from "../pages/Requests/DonationRequestDetails";
+
+// Auth Pages
+import Login from "../pages/Auth/Login";
+import Register from "../pages/Auth/Register";
+
+// Dashboard Pages
+import Dashboard from "../pages/Dashboard/Dashboard";
+import Profile from "../pages/Dashboard/Profile";
+
+// Donor Routes
+import CreateDonationRequest from "../components/form/CreateDonationRequest";
+import MyDonationRequests from "../pages/Dashboard/Donor/MyDonationRequests";
+import EditDonationRequest from "../components/form/EditDonationRequest";
+
+// Admin Routes
+import AllUsers from "../pages/Dashboard/Admin/AllUsers";
+import AllDonationRequests from "../pages/Dashboard/Admin/AllDonationRequests";
+import ContentManagement from "../pages/Dashboard/Admin/ContentManagement";
+import AddBlog from "../pages/Dashboard/Admin/AddBlog";
+import EditBlog from "../pages/Dashboard/Admin/EditBlog";
+
+// Common Components
+import Error from "../pages/error/Error";
+import PrivateRoute from "../middleware/PrivateRoute";
+
+// Routing Configuration
+const router = createBrowserRouter([
+  // =======================
+  // 🔓 Public Main Layout
+  // =======================
   {
     path: "/",
-    element: <Root />,
+    element: <MainLayout />,
     errorElement: <Error />,
     children: [
+      // --- Homepage
       { index: true, element: <Home /> },
-      { path: "search-donors", element: <SearchPage /> },
-      { path: "blog", element: <Blogs /> },
-      { path: "blogs/:id", element: <BlogDetails /> },
-      { path: "contact", element: <ContactUs /> },
-      { path: "about", element: <AboutUs /> },
-      { path: "faq", element: <FAQ /> },
-      { path: "privacy", element: <Privacy /> },
-      { path: "terms", element: <TermsOfService /> },
-      { path: "register", element: <Register /> },
-      { path: "login", element: <Login /> },
 
-      // Protected routes that don't use Dashboard layout
+      // --- Blogs
+      { path: "blog", element: <Blogs /> },
       {
-        path: "funding",
+        path: "blogs/:id",
         element: (
           <PrivateRoute>
-            <Funding />
+            <BlogPreview />
           </PrivateRoute>
         ),
       },
+
+      // --- Funding (shared access)
+      { path: "funding", element: <Funding /> },
+
+      // --- Search Donors
+      { path: "search", element: <SearchPage /> },
+
+      // --- Auth Pages
+      { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
+
+      // --- Public Donation Request Page
+      { path: "donation-requests", element: <DonationRequestsPublic /> },
+
+      // --- Donation Request Details (Requires Login)
       {
-        path: "donation-requests",
-        element: (
-          <PrivateRoute>
-            <DonationRequests />
-          </PrivateRoute>
-        ),
-      },
-      {
-        path: "donation-requests/:id",
+        path: "donation-request/:id",
         element: (
           <PrivateRoute>
             <DonationRequestDetails />
@@ -76,63 +86,50 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Dashboard routes with separate layout
+  // ===========================
+  // 🔐 Protected Dashboard Area
+  // ===========================
   {
     path: "/dashboard",
     element: (
       <PrivateRoute>
-        <Dashboard />
+        <DashboardLayout />
       </PrivateRoute>
     ),
+    errorElement: <Error />,
     children: [
-      { index: true, element: <DashboardHome /> },
+      // --- Dashboard Overview (common)
+      { index: true, element: <Dashboard /> },
+
+      // --- Profile Page (common)
       { path: "profile", element: <Profile /> },
+
+      // ========= Donor Routes =========
+      { path: "create-donation-request", element: <CreateDonationRequest /> },
       { path: "my-donation-requests", element: <MyDonationRequests /> },
       { path: "edit-donation/:id", element: <EditDonationRequest /> },
-      { path: "donation-details/:id", element: <DonationRequestDetails /> },
-      { path: "create-donation-request", element: <CreateDonationRequest /> },
-      {
-        path: "content-management",
-        element: <ContentManagement />,
-      },
+
+      // ========= Admin Routes =========
+      { path: "all-users", element: <AllUsers /> },
+      { path: "all-blood-donation-request", element: <AllDonationRequests /> },
+
+      // --- Content Management (Blogs)
+      { path: "content-management", element: <ContentManagement /> },
       { path: "content-management/add-blog", element: <AddBlog /> },
       { path: "content-management/edit-blog/:id", element: <EditBlog /> },
       {
         path: "content-management/blog-preview/:id",
         element: <BlogPreview />,
       },
-      // Admin-only routes
-      {
-        path: "all-users",
-        element: (
-          <AdminRoute>
-            <AllUsers />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "all-blood-donation-request",
-        element: (
-          <AdminRoute>
-            <DonationRequests />
-          </AdminRoute>
-        ),
-      },
+
+      // ========= Volunteer Routes =========
+      // Reuse AllDonationRequests and ContentManagement
+      // Render UI conditionally in layout/sidebar based on user role
+
+      // --- Funding (shared access in dashboard)
+      { path: "funding", element: <Funding /> },
     ],
   },
-
-  // Separate admin dashboard route (if needed)
-  {
-    path: "/admin",
-    element: (
-      <PrivateRoute>
-        <AdminRoute>
-          <AdminDashboard />
-        </AdminRoute>
-      </PrivateRoute>
-    ),
-  },
-
-  // Catch-all error route
-  { path: "*", element: <Error /> },
 ]);
+
+export default router;

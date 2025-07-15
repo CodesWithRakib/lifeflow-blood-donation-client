@@ -9,6 +9,8 @@ import { useLocation, useNavigate } from "react-router";
 import useTitle from "../../hooks/useTitle";
 import axios from "axios";
 import uploadImageToCloudinary from "../../utils/uploadImageToCloudinary";
+import upazilas from "../../constants/upazilas";
+import districts from "../../constants/districts";
 
 const RegisterForm = () => {
   const { createUser, updateUser, setUser } = useAuth();
@@ -26,29 +28,10 @@ const RegisterForm = () => {
     formState: { errors },
   } = useForm();
 
-  const [districts, setDistricts] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [registrationStatus, setRegistrationStatus] = useState("idle");
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [districtRes, upazilaRes] = await Promise.all([
-          axios("/districts.json"),
-          axios("/upazilas.json"),
-        ]);
-        setDistricts(districtRes?.data);
-        setUpazilas(upazilaRes?.data);
-      } catch (err) {
-        toast.error("Failed to load location data");
-      }
-    };
-
-    fetchData();
-  }, []);
 
   const onSubmit = async (data) => {
     try {
@@ -78,7 +61,7 @@ const RegisterForm = () => {
         photoURL: imageUrl,
       });
 
-      await axiosSecure.post("/api/users", newUser);
+      await axiosSecure.post("/users", newUser);
 
       setRegistrationStatus("success");
       toast.success("Account created successfully!");

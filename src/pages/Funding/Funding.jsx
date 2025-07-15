@@ -1,5 +1,4 @@
 import { loadStripe } from "@stripe/stripe-js";
-import React from "react";
 import FundingPage from "./FundingPage";
 import { Elements } from "@stripe/react-stripe-js";
 

@@ -2,60 +2,54 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useParams, useNavigate } from "react-router";
 import useAuth from "../../hooks/useAuth";
-import axios from "axios";
 import { Calendar, Clock, Droplet, MapPin, Hospital } from "lucide-react";
 import useAxios from "../../hooks/useAxios";
 import toast from "react-hot-toast";
+import districts from "../../constants/districts";
+import upazilas from "../../constants/upazilas";
+import useRole from "../../hooks/useRole";
 
 const EditDonationRequest = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [districts, setDistricts] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
+  const { isBlocked } = useRole();
   const axiosSecure = useAxios();
   const {
     register,
     handleSubmit,
     watch,
     reset,
-    setValue,
     formState: { errors },
   } = useForm();
 
-  const selectedDistrict = watch("district");
+  const recipientDistrict = watch("recipientDistrict");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [districtRes, upazilaRes, requestRes] = await Promise.all([
-          axios("/districts.json"),
-          axios("/upazilas.json"),
-          axiosSecure.get(`/api/donation-requests/${id}`),
-        ]);
+        const { data } = await axiosSecure.get("/donations");
+        const requestRes = data?.data?.find((req) => req._id === id);
 
-        setDistricts(districtRes?.data);
-        setUpazilas(upazilaRes?.data);
-
-        // Set form values from the fetched request
-        const requestData = requestRes.data;
+        console.log(requestRes);
+        // Set form values from the fetched request using CreateDonationRequest field names
         reset({
-          recipientName: requestData.recipientName,
-          district: requestData.district,
-          upazila: requestData.upazila,
-          hospital: requestData.hospital,
-          address: requestData.address,
-          bloodGroup: requestData.bloodGroup,
-          date: requestData.date.split("T")[0], // Format date for input
-          time: requestData.time,
-          message: requestData.message,
+          recipientName: requestRes.recipientName,
+          recipientDistrict: requestRes.recipientDistrict,
+          recipientUpazila: requestRes.recipientUpazila,
+          hospitalName: requestRes.hospitalName,
+          fullAddress: requestRes.fullAddress,
+          bloodGroup: requestRes.bloodGroup,
+          date: requestRes.date.split("T")[0],
+          time: requestRes.time,
+          message: requestRes.message,
         });
       } catch (error) {
         console.error("Error loading data", error);
         toast.error("Failed to load donation request");
-        navigate("/dashboard/my-requests");
+        navigate("/dashboard/my-donation-requests");
       } finally {
         setIsLoading(false);
       }
@@ -65,7 +59,7 @@ const EditDonationRequest = () => {
 
   // Find the selected district object
   const selectedDistrictObj = districts.find(
-    (d) => d.name === selectedDistrict
+    (d) => d.name === recipientDistrict
   );
 
   // Filter upazilas based on the selected district's ID
@@ -78,7 +72,7 @@ const EditDonationRequest = () => {
   const loggedInUser = {
     name: user?.displayName,
     email: user?.email,
-    isBlocked: false,
+    isBlocked,
   };
 
   const onSubmit = async (data) => {
@@ -93,14 +87,11 @@ const EditDonationRequest = () => {
         ...data,
         requesterName: loggedInUser.name,
         requesterEmail: loggedInUser.email,
-        status: "pending", // Reset status to pending when edited
+        status: "pending",
         updatedAt: new Date().toISOString(),
       };
 
-      const response = await axiosSecure.patch(
-        `/api/donation-requests/${id}`,
-        fullData
-      );
+      const response = await axiosSecure.patch(`/donations/${id}`, fullData);
       if (response.status === 200) {
         toast.success("Request updated successfully!");
         navigate("/dashboard/my-donation-requests");
@@ -182,9 +173,11 @@ const EditDonationRequest = () => {
             </label>
             <div className="relative">
               <select
-                {...register("district", { required: "District is required" })}
+                {...register("recipientDistrict", {
+                  required: "Recipient District is required",
+                })}
                 className={`w-full px-4 py-2 rounded-lg border ${
-                  errors.district
+                  errors.recipientDistrict
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 } bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10`}
@@ -200,9 +193,9 @@ const EditDonationRequest = () => {
                 <MapPin className="h-5 w-5 text-gray-400" />
               </div>
             </div>
-            {errors.district && (
+            {errors.recipientDistrict && (
               <p className="mt-1 text-sm text-red-500">
-                {errors.district.message}
+                {errors.recipientDistrict.message}
               </p>
             )}
           </div>
@@ -213,14 +206,16 @@ const EditDonationRequest = () => {
             </label>
             <div className="relative">
               <select
-                {...register("upazila", { required: "Upazila is required" })}
-                disabled={!selectedDistrict}
+                {...register("recipientUpazila", {
+                  required: "Recipient Upazila is required",
+                })}
+                disabled={!recipientDistrict}
                 className={`w-full px-4 py-2 rounded-lg border ${
-                  errors.upazila
+                  errors.recipientUpazila
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 } bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none pr-10 ${
-                  !selectedDistrict ? "opacity-50 cursor-not-allowed" : ""
+                  !recipientDistrict ? "opacity-50 cursor-not-allowed" : ""
                 }`}
               >
                 <option value="">Select Upazila</option>
@@ -234,9 +229,9 @@ const EditDonationRequest = () => {
                 <MapPin className="h-5 w-5 text-gray-400" />
               </div>
             </div>
-            {errors.upazila && (
+            {errors.recipientUpazila && (
               <p className="mt-1 text-sm text-red-500">
-                {errors.upazila.message}
+                {errors.recipientUpazila.message}
               </p>
             )}
           </div>
@@ -247,11 +242,11 @@ const EditDonationRequest = () => {
             </label>
             <div className="relative">
               <input
-                {...register("hospital", {
+                {...register("hospitalName", {
                   required: "Hospital name is required",
                 })}
                 className={`w-full px-4 py-2 rounded-lg border ${
-                  errors.hospital
+                  errors.hospitalName
                     ? "border-red-500"
                     : "border-gray-300 dark:border-gray-600"
                 } bg-white dark:bg-gray-700 text-gray-900 dark:text-white pl-10`}
@@ -260,9 +255,9 @@ const EditDonationRequest = () => {
                 <Hospital className="h-5 w-5 text-gray-400" />
               </div>
             </div>
-            {errors.hospital && (
+            {errors.hospitalName && (
               <p className="mt-1 text-sm text-red-500">
-                {errors.hospital.message}
+                {errors.hospitalName.message}
               </p>
             )}
           </div>
@@ -272,16 +267,18 @@ const EditDonationRequest = () => {
               Full Address <span className="text-red-500">*</span>
             </label>
             <input
-              {...register("address", { required: "Address is required" })}
+              {...register("fullAddress", {
+                required: "Full Address is required",
+              })}
               className={`w-full px-4 py-2 rounded-lg border ${
-                errors.address
+                errors.fullAddress
                   ? "border-red-500"
                   : "border-gray-300 dark:border-gray-600"
               } bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
             />
-            {errors.address && (
+            {errors.fullAddress && (
               <p className="mt-1 text-sm text-red-500">
-                {errors.address.message}
+                {errors.fullAddress.message}
               </p>
             )}
           </div>
@@ -426,7 +423,7 @@ const EditDonationRequest = () => {
 
           <button
             type="button"
-            onClick={() => navigate("/dashboard/my-requests")}
+            onClick={() => navigate("/dashboard/my-donation-requests")}
             className="w-full md:w-auto bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-3 rounded-lg font-medium transition-colors duration-300"
           >
             Cancel

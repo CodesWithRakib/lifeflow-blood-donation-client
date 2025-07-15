@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { User, Edit, Save, X, Droplet, MapPin } from "lucide-react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 import useAxios from "../../hooks/useAxios";
 import useAuth from "../../hooks/useAuth";
 import uploadImageToImageBB from "../../utils/imageUpload";
 import { useQuery } from "@tanstack/react-query";
 import getUserByEmail from "../../utils/getUserByemail";
+import districts from "../../constants/districts";
+import upazilas from "../../constants/upazilas";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import ParticleWaveSpinner from "../../components/common/ParticleWaveSpinner";
 
 const Profile = () => {
   const { user: authUser, updateUser } = useAuth();
@@ -15,9 +18,6 @@ const Profile = () => {
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [districts, setDistricts] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,26 +36,8 @@ const Profile = () => {
     queryKey: ["user", authUser?.email],
     queryFn: () => getUserByEmail(axiosSecure),
     enabled: !!authUser?.email,
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
-
-  // Fetch location data only once
-  useEffect(() => {
-    const fetchLocationData = async () => {
-      try {
-        const [districtRes, upazilaRes] = await Promise.all([
-          axios("/districts.json"),
-          axios("/upazilas.json"),
-        ]);
-        setDistricts(districtRes.data);
-        setUpazilas(upazilaRes.data);
-      } catch (error) {
-        console.error("Error loading location data:", error);
-        toast.error("Failed to load location data");
-      }
-    };
-
-    fetchLocationData();
-  }, []);
 
   // Update form data when userData is fetched
   useEffect(() => {
@@ -68,7 +50,6 @@ const Profile = () => {
         upazila: userData.upazila || "",
         bloodGroup: userData.bloodGroup || "",
       });
-      setIsLoading(false);
     }
   }, [userData, authUser]);
 
@@ -98,10 +79,10 @@ const Profile = () => {
     try {
       const imageUrl = await uploadImageToImageBB(file);
       setFormData((prev) => ({ ...prev, avatar: imageUrl }));
-      toast.success("Image uploaded successfully!");
+      toast.success("Profile image updated successfully!");
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
+      toast.error("Failed to upload profile image");
     } finally {
       setIsUploading(false);
     }
@@ -110,7 +91,8 @@ const Profile = () => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await axiosSecure.patch(`/api/user/${authUser.email}`, {
+      // Update backend first
+      await axiosSecure.patch(`/user/${authUser.email}`, {
         name: formData.name,
         avatar: formData.avatar,
         district: formData.district,
@@ -118,7 +100,7 @@ const Profile = () => {
         bloodGroup: formData.bloodGroup,
       });
 
-      // If avatar or name changed, update Firebase profile too
+      // Then update Firebase if needed
       if (
         formData.name !== authUser.displayName ||
         formData.avatar !== authUser.photoURL
@@ -130,37 +112,37 @@ const Profile = () => {
       }
 
       toast.success("Profile updated successfully!");
-      refetch();
+      await refetch();
       setEditMode(false);
     } catch (error) {
       console.error("Update failed:", error);
-      toast.error("Failed to update profile");
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to update profile. Please try again."
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
-  const filteredUpazilas = districts.find((d) => d.name === formData.district)
+  const filteredUpazilas = formData.district
     ? upazilas.filter(
         (u) =>
           u.district_id ===
-          districts.find((d) => d.name === formData.district).id
+          districts.find((d) => d.name === formData.district)?.id
       )
     : [];
-  if (isLoading || userQueryLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500"></div>
-      </div>
-    );
+
+  if (userQueryLoading || !userData) {
+    return <ParticleWaveSpinner fullPage />;
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-amber-600 dark:text-amber-500 flex items-center gap-2 mb-4 sm:mb-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+            <h2 className="text-2xl font-bold text-amber-600 dark:text-amber-500 flex items-center gap-2">
               <User className="h-6 w-6" />
               <span>My Profile</span>
             </h2>
@@ -169,6 +151,7 @@ const Profile = () => {
               <button
                 onClick={() => setEditMode(true)}
                 className="flex items-center gap-2 bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                aria-label="Edit profile"
               >
                 <Edit className="h-4 w-4" />
                 <span>Edit Profile</span>
@@ -178,6 +161,7 @@ const Profile = () => {
                 <button
                   onClick={handleCancel}
                   className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                  aria-label="Cancel editing"
                 >
                   <X className="h-4 w-4" />
                   <span>Cancel</span>
@@ -186,31 +170,10 @@ const Profile = () => {
                   onClick={handleSave}
                   disabled={isSaving || isUploading}
                   className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                  aria-label="Save changes"
                 >
                   {isSaving ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      <span>Saving...</span>
-                    </>
+                    <LoadingSpinner small />
                   ) : (
                     <>
                       <Save className="h-4 w-4" />
@@ -232,7 +195,7 @@ const Profile = () => {
                       formData.name
                     )}&background=ff9900&color=fff&size=128`
                   }
-                  alt="User Avatar"
+                  alt={`${formData.name}'s avatar`}
                   className="h-32 w-32 rounded-full object-cover border-4 border-amber-500 dark:border-amber-600 shadow-md transition-all duration-300 group-hover:opacity-90"
                 />
                 {editMode && (
@@ -241,13 +204,14 @@ const Profile = () => {
                       className={`cursor-pointer ${
                         isUploading ? "opacity-50 cursor-not-allowed" : ""
                       }`}
+                      aria-label="Change profile picture"
                     >
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
                         onChange={(e) => {
-                          const file = e.target.files[0];
+                          const file = e.target.files?.[0];
                           if (file) {
                             handleImageUpload(file);
                           }
@@ -255,26 +219,7 @@ const Profile = () => {
                         disabled={isUploading}
                       />
                       {isUploading ? (
-                        <svg
-                          className="animate-spin h-5 w-5 text-amber-600 dark:text-amber-500"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
+                        <LoadingSpinner small />
                       ) : (
                         <Edit className="h-5 w-5 text-amber-600 dark:text-amber-500" />
                       )}
@@ -285,11 +230,16 @@ const Profile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Full Name
                 </label>
                 <input
+                  id="name"
                   type="text"
                   name="name"
                   value={formData.name}
@@ -303,11 +253,16 @@ const Profile = () => {
                 />
               </div>
 
+              {/* Email Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Email Address
                 </label>
                 <input
+                  id="email"
                   type="email"
                   name="email"
                   value={formData.email}
@@ -316,12 +271,17 @@ const Profile = () => {
                 />
               </div>
 
+              {/* District Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="district"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   District
                 </label>
                 <div className="relative">
                   <select
+                    id="district"
                     name="district"
                     value={formData.district}
                     onChange={handleChange}
@@ -345,12 +305,17 @@ const Profile = () => {
                 </div>
               </div>
 
+              {/* Upazila Field */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="upazila"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Upazila
                 </label>
                 <div className="relative">
                   <select
+                    id="upazila"
                     name="upazila"
                     value={formData.upazila}
                     onChange={handleChange}
@@ -376,12 +341,17 @@ const Profile = () => {
                 </div>
               </div>
 
+              {/* Blood Group Field */}
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="bloodGroup"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
                   Blood Group
                 </label>
                 <div className="relative">
                   <select
+                    id="bloodGroup"
                     name="bloodGroup"
                     value={formData.bloodGroup}
                     onChange={handleChange}

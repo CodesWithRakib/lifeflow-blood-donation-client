@@ -11,13 +11,13 @@ export const useUser = () => {
     queryKey: ["user"],
     queryFn: async () => {
       try {
-        const res = await axiosSecure.get("/api/user");
+        const { data } = await axiosSecure.get("/user");
 
-        if (!res.data) {
+        if (!data) {
           throw new Error("User data not found");
         }
 
-        return res.data;
+        return data.data;
       } catch (error) {
         if (error.response?.status === 401) {
           // Redirect to login if unauthorized

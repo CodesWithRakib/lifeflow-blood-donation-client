@@ -21,7 +21,7 @@ const ContactUs = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await axiosSecure.post("/api/contact", data);
+      const response = await axiosSecure.post("/contact", data);
       if (response.status === 200) {
         toast.success("Message sent successfully!");
         reset();
