@@ -29,6 +29,8 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
+import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import Pagination from "../../../components/common/Pagination";
 
 const AllUsers = () => {
   const axiosSecure = useAxios();
@@ -71,7 +73,7 @@ const AllUsers = () => {
           <div className="flex items-center gap-3">
             <div className="relative">
               <img
-                className="h-10 w-10 rounded-full object-cover border-2 border-white shadow"
+                className="h-10 w-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow"
                 src={
                   user.avatar ||
                   `https://ui-avatars.com/api/?name=${user.name}&background=random`
@@ -85,8 +87,10 @@ const AllUsers = () => {
               )}
             </div>
             <div>
-              <div className="font-medium text-gray-900">{user.name}</div>
-              <div className="text-xs text-gray-500">
+              <div className="font-medium text-gray-900 dark:text-white">
+                {user.name}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 Joined: {new Date(user.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -103,7 +107,9 @@ const AllUsers = () => {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-sm">
               <Mail className="w-4 h-4 text-purple-500" />
-              <span className="text-gray-700">{user.email}</span>
+              <span className="text-gray-700 dark:text-gray-300">
+                {user.email}
+              </span>
             </div>
             {user.phone && (
               <div className="flex items-center gap-2 text-sm">
@@ -121,7 +127,9 @@ const AllUsers = () => {
                     d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                   />
                 </svg>
-                <span className="text-gray-500">{user.phone}</span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {user.phone}
+                </span>
               </div>
             )}
           </div>
@@ -145,10 +153,10 @@ const AllUsers = () => {
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
                 user.role === "admin"
-                  ? "bg-yellow-100 text-yellow-800"
+                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                   : user.role === "volunteer"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-blue-100 text-blue-800"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
               }`}
             >
               {user.role}
@@ -172,8 +180,8 @@ const AllUsers = () => {
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
                 user.status === "active"
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
+                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}
             >
               {user.status}
@@ -192,12 +200,12 @@ const AllUsers = () => {
               onClick={() =>
                 setActiveMenu(activeMenu === user._id ? null : user._id)
               }
-              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
             {activeMenu === user._id && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl z-10 border border-gray-100">
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-10 border border-gray-100 dark:border-gray-700">
                 <div className="py-1">
                   {user.status === "active" ? (
                     <button
@@ -205,7 +213,7 @@ const AllUsers = () => {
                         handleAction(user._id, "block");
                         setActiveMenu(null);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/50 w-full text-left transition-colors"
                     >
                       <Lock className="w-4 h-4" />
                       <span>Block User</span>
@@ -216,7 +224,7 @@ const AllUsers = () => {
                         handleAction(user._id, "unblock");
                         setActiveMenu(null);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-green-600 hover:bg-green-50 w-full text-left transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/50 w-full text-left transition-colors"
                     >
                       <Unlock className="w-4 h-4" />
                       <span>Unblock User</span>
@@ -228,7 +236,7 @@ const AllUsers = () => {
                         handleAction(user._id, "make-admin");
                         setActiveMenu(null);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 w-full text-left transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/50 w-full text-left transition-colors"
                     >
                       <Crown className="w-4 h-4" />
                       <span>Make Admin</span>
@@ -240,7 +248,7 @@ const AllUsers = () => {
                         handleAction(user._id, "make-volunteer");
                         setActiveMenu(null);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 w-full text-left transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/50 w-full text-left transition-colors"
                     >
                       <HandHeart className="w-4 h-4" />
                       <span>Make Volunteer</span>
@@ -252,7 +260,7 @@ const AllUsers = () => {
                         handleAction(user._id, "make-donor");
                         setActiveMenu(null);
                       }}
-                      className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 w-full text-left transition-colors"
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/50 w-full text-left transition-colors"
                     >
                       <UserRound className="w-4 h-4" />
                       <span>Make Donor</span>
@@ -361,31 +369,27 @@ const AllUsers = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center h-64 text-red-500">
+      <div className="flex items-center justify-center h-64 text-red-500 dark:text-red-400">
         Error: {error.message}
       </div>
     );
   }
 
   return (
-    <div className=" max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
             <Users className="w-6 h-6 text-blue-500" />
             User Management
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Manage all registered users and their permissions
           </p>
         </div>
@@ -400,7 +404,7 @@ const AllUsers = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="border border-gray-200 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm appearance-none"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 shadow-sm appearance-none text-gray-700 dark:text-gray-300"
             >
               <option value="all">All Users</option>
               <option value="active">Active</option>
@@ -411,16 +415,16 @@ const AllUsers = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider"
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider"
                     >
                       {flexRender(
                         header.column.columnDef.header,
@@ -431,12 +435,15 @@ const AllUsers = () => {
                 </tr>
               ))}
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {usersData.users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-gray-500">
+                  <td
+                    colSpan={5}
+                    className="text-center py-8 text-gray-500 dark:text-gray-400"
+                  >
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <UserRound className="w-8 h-8 text-gray-300" />
+                      <UserRound className="w-8 h-8 text-gray-300 dark:text-gray-500" />
                       <p>No users found</p>
                     </div>
                   </td>
@@ -445,7 +452,7 @@ const AllUsers = () => {
                 table.getRowModel().rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
@@ -464,8 +471,8 @@ const AllUsers = () => {
 
         {/* Pagination */}
         {usersData.pagination.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-gray-500">
+          <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
               Showing{" "}
               <span className="font-medium">{(page - 1) * limit + 1}</span> to{" "}
               <span className="font-medium">
@@ -475,87 +482,13 @@ const AllUsers = () => {
               <span className="font-medium">{usersData.pagination.total}</span>{" "}
               users
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage(1)}
-                disabled={page === 1}
-                className={`p-2 rounded-md ${
-                  page === 1
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <ChevronsLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page === 1}
-                className={`p-2 rounded-md ${
-                  page === 1
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-1">
-                {Array.from(
-                  { length: Math.min(5, usersData.pagination.totalPages) },
-                  (_, i) => {
-                    let pageNum;
-                    if (usersData.pagination.totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (page <= 3) {
-                      pageNum = i + 1;
-                    } else if (page >= usersData.pagination.totalPages - 2) {
-                      pageNum = usersData.pagination.totalPages - 4 + i;
-                    } else {
-                      pageNum = page - 2 + i;
-                    }
 
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setPage(pageNum)}
-                        className={`w-8 h-8 rounded-md flex items-center justify-center text-sm ${
-                          pageNum === page
-                            ? "bg-blue-500 text-white"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-              <button
-                onClick={() =>
-                  setPage((prev) =>
-                    Math.min(prev + 1, usersData.pagination.totalPages)
-                  )
-                }
-                disabled={page === usersData.pagination.totalPages}
-                className={`p-2 rounded-md ${
-                  page === usersData.pagination.totalPages
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPage(usersData.pagination.totalPages)}
-                disabled={page === usersData.pagination.totalPages}
-                className={`p-2 rounded-md ${
-                  page === usersData.pagination.totalPages
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                <ChevronsRight className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Reusable Pagination Component */}
+            <Pagination
+              currentPage={page}
+              totalPages={usersData.pagination.totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
           </div>
         )}
       </div>

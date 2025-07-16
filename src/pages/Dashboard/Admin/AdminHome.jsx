@@ -92,9 +92,9 @@ const AdminHome = () => {
     })) || [];
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
           Dashboard Overview
         </h1>
         <p className="text-gray-600 dark:text-gray-300 mt-1">
@@ -158,12 +158,39 @@ const AdminHome = () => {
           </h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+              <BarChart
+                data={weeklyData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E5E7EB"
+                  strokeOpacity={0.2}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: "#6B7280" }}
+                  axisLine={{ stroke: "#E5E7EB", strokeOpacity: 0.2 }}
+                />
+                <YAxis
+                  tick={{ fill: "#6B7280" }}
+                  axisLine={{ stroke: "#E5E7EB", strokeOpacity: 0.2 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    borderColor: "rgba(0, 0, 0, 0.1)",
+                    borderRadius: "0.5rem",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  }}
+                />
+                <Bar
+                  dataKey="amount"
+                  fill="#F59E0B"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={1500}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -216,7 +243,7 @@ const StatCard = ({
   subtitleColor = "text-gray-500 dark:text-gray-400",
   subtitleIcon,
 }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow duration-200">
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-gray-500 dark:text-gray-400">

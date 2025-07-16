@@ -18,7 +18,7 @@ const FeaturedSection = () => {
 
   const features = [
     {
-      icon: <HeartPulse className="w-8 h-8" />,
+      icon: HeartPulse,
       title: "Life-Saving Impact",
       description:
         "Each donation can save up to 3 lives in emergency situations.",
@@ -27,7 +27,7 @@ const FeaturedSection = () => {
       bgColor: "bg-red-50 dark:bg-red-900/20",
     },
     {
-      icon: <Users className="w-8 h-8" />,
+      icon: Users,
       title: "Growing Community",
       description:
         "Join our network of 50,000+ registered donors across the country.",
@@ -36,7 +36,7 @@ const FeaturedSection = () => {
       bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
     },
     {
-      icon: <CalendarCheck className="w-8 h-8" />,
+      icon: CalendarCheck,
       title: "Easy Scheduling",
       description:
         "Book appointments at 200+ partner centers with our mobile app.",
@@ -45,7 +45,7 @@ const FeaturedSection = () => {
       bgColor: "bg-amber-50 dark:bg-amber-900/20",
     },
     {
-      icon: <ShieldCheck className="w-8 h-8" />,
+      icon: ShieldCheck,
       title: "Safety Certified",
       description:
         "All centers follow WHO safety protocols with sterile equipment.",
@@ -54,7 +54,7 @@ const FeaturedSection = () => {
       bgColor: "bg-green-50 dark:bg-green-900/20",
     },
     {
-      icon: <Clock className="w-8 h-8" />,
+      icon: Clock,
       title: "Quick Process",
       description:
         "Complete your donation in just 30–45 minutes including screening.",
@@ -63,7 +63,7 @@ const FeaturedSection = () => {
       bgColor: "bg-gray-50 dark:bg-gray-800/20",
     },
     {
-      icon: <Activity className="w-8 h-8" />,
+      icon: Activity,
       title: "Health Benefits",
       description:
         "Regular donation reduces risk of heart disease and burns calories.",
@@ -77,10 +77,7 @@ const FeaturedSection = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
   };
 
@@ -100,8 +97,8 @@ const FeaturedSection = () => {
     <section className="py-16 md:py-24 bg-white dark:bg-gray-900 relative overflow-hidden">
       {/* Decorative blur blobs */}
       <div className="absolute inset-0 overflow-hidden opacity-5">
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-red-400 rounded-full filter blur-3xl"></div>
-        <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-amber-400 rounded-full filter blur-3xl"></div>
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-red-400 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-amber-400 rounded-full blur-3xl"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -145,29 +142,32 @@ const FeaturedSection = () => {
           variants={containerVariants}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              variants={itemVariants}
-              whileHover={{ y: -5 }}
-              className={`p-6 rounded-xl ${feature.bgColor} border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300`}
-            >
-              <div
-                className={`w-12 h-12 rounded-lg ${feature.bgColor} flex items-center justify-center mb-4`}
+          {features.map((feature, index) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={index}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                className={`p-6 rounded-xl ${feature.bgColor} border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all duration-300`}
               >
-                <div className={feature.color}>{feature.icon}</div>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-3">
-                {feature.description}
-              </p>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {feature.stats}
-              </p>
-            </motion.div>
-          ))}
+                <div
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${feature.color} ${feature.bgColor}`}
+                >
+                  <Icon className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-3">
+                  {feature.description}
+                </p>
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  {feature.stats}
+                </p>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {/* CTA Button */}
@@ -187,7 +187,7 @@ const FeaturedSection = () => {
         </motion.div>
       </div>
 
-      {/* Decorative blood pattern SVG */}
+      {/* Decorative SVG shape */}
       <div className="absolute -bottom-40 -right-40 w-96 h-96 opacity-5 dark:opacity-10">
         <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
           <path

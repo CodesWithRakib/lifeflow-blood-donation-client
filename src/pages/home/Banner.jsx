@@ -46,6 +46,13 @@ const Banner = () => {
     threshold: 0.1,
   });
 
+  const benefits = [
+    "1 donation can save up to 3 lives",
+    "Only takes about 10 minutes",
+    "Helps maintain your own health",
+    "Free health checkup included",
+  ];
+
   return (
     <section
       ref={ref}
@@ -91,14 +98,14 @@ const Banner = () => {
             >
               <Link
                 to="/register"
-                className="bg-white hover:bg-gray-50 text-red-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5"
+                className="bg-white hover:bg-gray-50 text-red-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
               >
                 <HeartHandshake className="h-5 w-5" />
                 Join as a Donor
               </Link>
               <Link
                 to="/search-donors"
-                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5"
+                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
               >
                 <Search className="h-5 w-5" />
                 Search Donors
@@ -145,12 +152,7 @@ const Banner = () => {
                   <Droplet className="h-16 w-16 text-red-200 mb-4" />
                   <h3 className="text-xl font-bold mb-4">Why Donate Blood?</h3>
                   <ul className="space-y-3 text-red-100 text-left w-full">
-                    {[
-                      "1 donation can save up to 3 lives",
-                      "Only takes about 10 minutes",
-                      "Helps maintain your own health",
-                      "Free health checkup included",
-                    ].map((item, index) => (
+                    {benefits.map((item, index) => (
                       <motion.li
                         key={index}
                         className="flex items-start gap-3"
@@ -182,12 +184,7 @@ const Banner = () => {
             <Droplet className="h-12 w-12 text-red-200 mb-3" />
             <h3 className="text-lg font-bold mb-3">Why Donate Blood?</h3>
             <ul className="space-y-2 text-red-100 text-sm text-left w-full">
-              {[
-                "1 donation can save up to 3 lives",
-                "Only takes about 10 minutes",
-                "Helps maintain your own health",
-                "Free health checkup included",
-              ].map((item, index) => (
+              {benefits.map((item, index) => (
                 <motion.li
                   key={index}
                   className="flex items-start gap-2"

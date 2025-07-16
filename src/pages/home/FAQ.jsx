@@ -5,7 +5,7 @@ const FAQ = () => {
   const [activeIndex, setActiveIndex] = useState(null);
 
   const toggleFAQ = (index) => {
-    setActiveIndex(activeIndex === index ? null : index);
+    setActiveIndex((prev) => (prev === index ? null : index));
   };
 
   const faqs = [
@@ -32,44 +32,54 @@ const FAQ = () => {
     {
       question: "Can I donate if I have a tattoo?",
       answer:
-        "Yes, but you may need to wait 3-12 months depending on where you got the tattoo and whether it was done in a licensed facility.",
+        "Yes, but you may need to wait 3–12 months depending on where you got the tattoo and whether it was done in a licensed facility.",
     },
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold text-center mb-12 text-gray-900 dark:text-white">
+    <section className="max-w-4xl mx-auto px-4 py-16">
+      <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-900 dark:text-white">
         Frequently Asked Questions
-      </h1>
+      </h2>
 
       <div className="space-y-4">
-        {faqs.map((faq, index) => (
-          <div
-            key={index}
-            className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
-          >
-            <button
-              className="flex justify-between items-center w-full p-4 text-left bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={() => toggleFAQ(index)}
+        {faqs.map((faq, index) => {
+          const isOpen = activeIndex === index;
+
+          return (
+            <div
+              key={index}
+              className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-all duration-300"
             >
-              <h3 className="font-medium text-gray-900 dark:text-white">
-                {faq.question}
-              </h3>
-              <ChevronDown
-                className={`w-5 h-5 text-gray-500 transition-transform ${
-                  activeIndex === index ? "transform rotate-180" : ""
+              <button
+                className="w-full flex justify-between items-center p-5 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                onClick={() => toggleFAQ(index)}
+                aria-expanded={isOpen}
+                aria-controls={`faq-${index}`}
+              >
+                <span className="font-medium text-gray-900 dark:text-white text-left">
+                  {faq.question}
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              <div
+                id={`faq-${index}`}
+                className={`px-5 pb-4 text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 transition-all duration-300 ease-in-out ${
+                  isOpen ? "block" : "hidden"
                 }`}
-              />
-            </button>
-            {activeIndex === index && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+              >
                 {faq.answer}
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -109,6 +109,14 @@ const router = createBrowserRouter([
       { path: "create-donation-request", element: <CreateDonationRequest /> },
       { path: "my-donation-requests", element: <MyDonationRequests /> },
       { path: "my-donations", element: <MyDonations /> },
+      {
+        path: "donation-request/:id",
+        element: (
+          <PrivateRoute>
+            <DonationRequestDetails />
+          </PrivateRoute>
+        ),
+      },
       { path: "edit-donation/:id", element: <EditDonationRequest /> },
 
       // ========= Admin Routes =========

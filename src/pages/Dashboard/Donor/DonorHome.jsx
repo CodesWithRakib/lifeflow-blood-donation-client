@@ -148,8 +148,14 @@ const DonorHome = () => {
           <div className="flex items-center gap-2 text-sm">
             <User className="w-4 h-4 text-amber-500" />
             Status:{" "}
-            <strong className="text-green-600 dark:text-green-400">
-              Active
+            <strong
+              className={`${
+                userData?.status === "active"
+                  ? "text-green-500  dark:text-green-400"
+                  : "text-red-500 dark:text-red-400"
+              }`}
+            >
+              {userData?.status || "Unknown"}
             </strong>
           </div>
         </div>
@@ -251,7 +257,7 @@ const DonorHome = () => {
                       </button>
                       <button
                         onClick={() =>
-                          navigate(`/donation-details/${request._id}`)
+                          navigate(`/dashboard/donation-request/${request._id}`)
                         }
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                         title="View details"
@@ -273,7 +279,7 @@ const DonorHome = () => {
 
         <div className="px-6 py-4 border-t dark:border-gray-800 text-right">
           <Link
-            to="/my-donation-requests"
+            to="/dashboard/my-donation-requests"
             className="inline-flex items-center px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
           >
             View All My Requests
