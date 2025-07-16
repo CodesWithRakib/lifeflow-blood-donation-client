@@ -1,40 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
 import { Droplet, Search, Frown, Filter, MapPin } from "lucide-react";
 import useAxios from "../../hooks/useAxios";
 import DonorCard from "./DonorCard";
+import upazilas from "../../constants/upazilas";
+import districts from "../../constants/districts";
 
 const SearchPage = () => {
   const axiosSecure = useAxios();
   const { register, handleSubmit, watch, setValue, reset } = useForm();
   const [donors, setDonors] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [districts, setDistricts] = useState([]);
-  const [upazilas, setUpazilas] = useState([]);
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
   // Blood group options
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
-  // Fetch location data
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [districtRes, upazilaRes] = await Promise.all([
-          axios.get("/districts.json"),
-          axios.get("/upazilas.json"),
-        ]);
-        setDistricts(districtRes?.data || []);
-        setUpazilas(upazilaRes?.data || []);
-      } catch (err) {
-        console.error("Failed to load location data", err);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   // Filter upazilas based on selected district
   const filteredUpazilas = selectedDistrictId
@@ -70,7 +51,7 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2">

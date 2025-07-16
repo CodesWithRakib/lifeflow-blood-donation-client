@@ -101,7 +101,7 @@ const FeaturedSection = () => {
         <div className="absolute bottom-1/3 -right-20 w-96 h-96 bg-amber-400 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <motion.div
           ref={ref}
           initial="hidden"

@@ -138,7 +138,7 @@ const Profile = () => {
   }
 
   return (
-    <div className=" ">
+    <div className="max-w-screen-2xl mx-auto  lg:px-8 ">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -229,7 +229,7 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Name Field */}
               <div>
                 <label

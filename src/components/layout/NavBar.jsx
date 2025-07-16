@@ -125,7 +125,7 @@ const Navbar = () => {
           : "bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link

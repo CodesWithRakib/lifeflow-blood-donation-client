@@ -81,10 +81,10 @@ const RegisterForm = () => {
     : [];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+    <div className=" flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6 w-full max-w-md space-y-6 border border-gray-200 dark:border-gray-700 transition-all duration-300"
+        className="bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6 w-full max-w-xl space-y-6 border border-gray-200 dark:border-gray-700 transition-all duration-300"
       >
         <div className="text-center">
           <h2 className="text-3xl font-bold text-amber-600 dark:text-amber-500 mb-1">

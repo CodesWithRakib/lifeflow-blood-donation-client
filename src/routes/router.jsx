@@ -66,7 +66,7 @@ const router = createBrowserRouter([
       { path: "funding", element: <Funding /> },
 
       // --- Search Donors
-      { path: "search", element: <SearchPage /> },
+      { path: "search-donors", element: <SearchPage /> },
 
       // --- Auth Pages
       { path: "login", element: <Login /> },
