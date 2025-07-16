@@ -41,6 +41,7 @@ const CreateDonationRequest = () => {
     isBlocked,
   };
 
+  console.log(loggedInUser);
   const onSubmit = async (data) => {
     if (loggedInUser.isBlocked) {
       toast.error("You are blocked from creating requests.");

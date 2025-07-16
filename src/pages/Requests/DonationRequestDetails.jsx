@@ -44,7 +44,7 @@ const DonationRequestDetails = () => {
   const mutation = useMutation({
     mutationFn: async (donationInfo) => {
       const res = await axiosSecure.patch(
-        `/donations/donate/${id}`,
+        `/donations/${id}/donate`,
         donationInfo
       );
       return res.data;
@@ -65,44 +65,67 @@ const DonationRequestDetails = () => {
       return toast.error("Please login to donate");
     }
 
-    if (!request) return;
+    // Additional validation checks
+    if (!request) {
+      return toast.error("Request data not loaded");
+    }
 
     if (request.status !== "pending") {
       return toast.error("This request is no longer available for donation.");
     }
+
     if (request.requesterEmail === user?.email) {
       return toast.error("You cannot donate to your own request.");
     }
 
+    // Enhanced confirmation dialog
     Swal.fire({
-      title: "Confirm Your Donation",
+      title: "Confirm Your Donation Commitment",
       html: `
-        <div class="text-left">
-          <p class="mb-2">You're about to donate for:</p>
+      <div class="text-left space-y-3">
+        <p class="font-medium">You're committing to donate for:</p>
+        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
           <p class="font-semibold">${request.recipientName}</p>
-          <p class="text-sm text-gray-600">${request.hospitalName}</p>
-          <div class="mt-4 p-3 bg-amber-50 rounded-lg">
-            <p class="text-sm font-medium text-amber-800">Please ensure you meet all donation requirements before proceeding.</p>
-          </div>
+          <p class="text-sm text-gray-600 dark:text-gray-300">${
+            request.hospitalName
+          }</p>
+          <p class="text-sm mt-1">
+            <span class="font-medium">When:</span> 
+            ${format(new Date(request.date), "PPP")} at ${request.time}
+          </p>
         </div>
-      `,
+        <div class="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+            Please ensure you're available on the specified date and meet all donation requirements.
+          </p>
+        </div>
+      </div>
+    `,
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#E53E3E",
       cancelButtonColor: "#4B5563",
-      confirmButtonText: "Yes, I'll donate",
+      confirmButtonText: "Confirm Donation",
       cancelButtonText: "Cancel",
       focusConfirm: false,
-      customClass: {
-        popup: "rounded-xl",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        mutation.mutate({
-          donorName: user?.displayName,
-          donorEmail: user?.email,
+      showLoaderOnConfirm: true,
+      preConfirm: () => {
+        return mutation.mutateAsync({
+          donor: {
+            name: user?.displayName,
+            email: user?.email,
+            avatar: user?.photoURL,
+          },
           status: "inprogress",
         });
+      },
+      customClass: {
+        popup: "rounded-xl",
+        htmlContainer: "text-left",
+      },
+    }).then((result) => {
+      if (result.isConfirmed && result.value) {
+        toast.success("Donation confirmed successfully!");
       }
     });
   };

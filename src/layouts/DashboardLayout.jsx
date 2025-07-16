@@ -155,6 +155,7 @@ const DashboardLayout = () => {
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -164,11 +165,16 @@ const DashboardLayout = () => {
               className="fixed inset-0 z-40 bg-black/50 md:hidden"
             />
 
+            {/* Sidebar */}
             <motion.div
-              initial={{ x: -300 }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              exit={{ x: "-100%" }}
+              transition={{
+                type: "tween",
+                ease: [0.25, 0.1, 0.25, 1],
+                duration: 0.3,
+              }}
               className="fixed top-0 left-0 h-full w-72 bg-white shadow-lg z-50 overflow-y-auto"
             >
               <div className="p-4">
@@ -176,12 +182,13 @@ const DashboardLayout = () => {
                   <h2 className="text-xl font-bold text-gray-800">Menu</h2>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 rounded-md text-gray-600 hover:bg-gray-100"
+                    className="p-2 rounded-md text-gray-600 hover:bg-gray-100 transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
+                {/* Rest of your sidebar content remains the same */}
                 <div className="flex items-center gap-3 mb-6 p-2">
                   <img
                     src={
@@ -207,7 +214,7 @@ const DashboardLayout = () => {
                       <NavLink
                         to={item.path}
                         key={item.path}
-                        end={item.path === "/dashboard"} // ✅ apply fix here too
+                        end={item.path === "/dashboard"}
                         className={({ isActive }) =>
                           `flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium text-sm ${
                             isActive
@@ -237,12 +244,12 @@ const DashboardLayout = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 p-4 md:p-6">
+      <main className="flex-1 md:ml-64 ">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-xl shadow-sm p-4 md:p-6 min-h-[calc(100vh-32px)]"
+          className="bg-white rounded-xl shadow-sm p-4  min-h-[calc(100vh-32px)]"
         >
           <Outlet />
         </motion.div>

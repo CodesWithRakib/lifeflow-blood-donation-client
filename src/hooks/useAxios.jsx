@@ -1,31 +1,35 @@
 import axios from "axios";
 
+// Explicitly set the base URL (helps with debugging)
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://blood-donation-server-dun.vercel.app";
+
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
-  withCredentials: true, // Always send cookies
+  baseURL: `${BASE_URL}/api`, // Ensure /api matches your backend route
+  withCredentials: true,
 });
 
-// Only attach a response interceptor if you want to catch 401/403 errors
-let interceptorsSet = false;
+// Request interceptor to add headers
+axiosInstance.interceptors.request.use((config) => {
+  console.log(
+    `[AXIOS] Sending ${config.method?.toUpperCase()} to ${config.url}`
+  );
+  return config;
+});
 
-const useAxios = () => {
-  if (!interceptorsSet) {
-    axiosInstance.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          console.warn(
-            "🔐 Unauthorized - token cookie may be missing or expired"
-          );
-          // Optionally redirect:
-          // window.location.href = "/login";
-        }
-        return Promise.reject(error);
-      }
-    );
-    interceptorsSet = true;
+// Response interceptor
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error(`[AXIOS Error]`, error);
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn("Authentication error - redirecting to login");
+      // window.location.href = "/login"; // Uncomment if needed
+    }
+    return Promise.reject(error);
   }
-  return axiosInstance;
-};
+);
 
+const useAxios = () => axiosInstance;
 export default useAxios;

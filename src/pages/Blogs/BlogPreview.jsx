@@ -245,7 +245,7 @@ const BlogPreview = () => {
     );
   if (!blog)
     return (
-      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
+      <div className=" px-4 py-20 text-center">
         <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4">
           Blog not found
         </h2>
@@ -259,7 +259,7 @@ const BlogPreview = () => {
     );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto p-4 ">
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}

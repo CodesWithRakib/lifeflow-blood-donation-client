@@ -8,6 +8,7 @@ const StatsCard = ({
   trend,
   trendPositive = true,
   loading = false,
+  delay = 0,
 }) => {
   // Animation variants
   const cardVariants = {
@@ -18,6 +19,7 @@ const StatsCard = ({
       transition: {
         duration: 0.3,
         ease: "easeOut",
+        delay: delay * 0.1,
       },
     },
   };
@@ -35,9 +37,13 @@ const StatsCard = ({
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      whileHover={{ y: -2 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md"
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 transition-all duration-200 hover:shadow-md overflow-hidden"
     >
+      {/* Subtle hover effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-transparent to-white dark:to-gray-700 opacity-0 group-hover:opacity-10 transition-opacity duration-300" />
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
@@ -54,22 +60,25 @@ const StatsCard = ({
             )}
           </h3>
         </div>
-        <div className="p-3 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 shadow-inner">
+        <div className="p-3 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 shadow-inner group-hover:shadow-md transition-shadow">
           {icon}
         </div>
       </div>
 
       {trend && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          initial={{ opacity: 0, x: -5 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 + delay * 0.1 }}
           className={`mt-4 inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${trendBgColor} ${trendColor}`}
         >
           <TrendIcon className="h-3 w-3 mr-1" />
           <span>{trend}</span>
         </motion.div>
       )}
+
+      {/* Optional: Add a subtle border on hover */}
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-amber-200 dark:group-hover:border-amber-800 rounded-xl pointer-events-none transition-all duration-300" />
     </motion.div>
   );
 };

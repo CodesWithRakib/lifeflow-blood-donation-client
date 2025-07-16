@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router";
 import {
   PlusCircle,
@@ -12,6 +12,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  flexRender,
+} from "@tanstack/react-table";
 import Swal from "sweetalert2";
 import { toast } from "react-hot-toast";
 import useRole from "../../../hooks/useRole";
@@ -19,15 +26,37 @@ import useAxios from "../../../hooks/useAxios";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
 
-const fetchBlogs = async (page, limit, search, status, axiosSecure) => {
-  const params = {
-    page,
-    limit,
-    search,
-    sort: "-createdAt",
-    status,
-  };
+const StatusBadge = ({ status }) => {
+  const base = "px-2 py-1 text-xs font-medium rounded-full";
+  if (status === "published") {
+    return (
+      <span
+        className={`${base} bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200`}
+      >
+        Published
+      </span>
+    );
+  } else if (status === "draft") {
+    return (
+      <span
+        className={`${base} bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200`}
+      >
+        Draft
+      </span>
+    );
+  } else {
+    return (
+      <span
+        className={`${base} bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300`}
+      >
+        {status}
+      </span>
+    );
+  }
+};
 
+const fetchBlogs = async (page, limit, search, status, axiosSecure) => {
+  const params = { page, limit, search, sort: "-createdAt", status };
   const res = await axiosSecure.get("/blogs", { params });
   return res.data;
 };
@@ -60,7 +89,13 @@ const ContentManagement = () => {
   });
 
   const publishMutation = useMutation({
-    mutationFn: async (id) => await axiosSecure.patch(`/blogs/${id}/publish`),
+    mutationFn: async (id) => {
+      const currentStatus = data?.data.find((blog) => blog._id === id)?.status;
+      const newStatus = currentStatus === "published" ? "draft" : "published";
+      return await axiosSecure.patch(`/blogs/${id}/status`, {
+        status: newStatus,
+      });
+    },
     onSuccess: () => {
       toast.success("Blog status updated successfully");
       queryClient.invalidateQueries({ queryKey: ["blogs"] });
@@ -78,21 +113,11 @@ const ContentManagement = () => {
       text: "This action cannot be undone!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
+      confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Delete",
-      background: "#ffffff",
-      customClass: {
-        popup: "dark:bg-gray-800 dark:text-white",
-        title: "dark:text-white",
-        content: "dark:text-gray-300",
-        confirmButton: "hover:bg-red-700 transition-colors",
-        cancelButton: "hover:bg-gray-600 transition-colors",
-      },
     });
-    if (result.isConfirmed) {
-      deleteMutation.mutate(id);
-    }
+    if (result.isConfirmed) deleteMutation.mutate(id);
   };
 
   const handlePublishToggle = async (id, currentStatus) => {
@@ -102,23 +127,13 @@ const ContentManagement = () => {
       text: `This will change the blog status to ${newStatus}`,
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#d97706",
       cancelButtonColor: "#6b7280",
       confirmButtonText: `Yes, ${
         newStatus === "published" ? "Publish" : "Unpublish"
       }`,
-      background: "#ffffff",
-      customClass: {
-        popup: "dark:bg-gray-800 dark:text-white",
-        title: "dark:text-white",
-        content: "dark:text-gray-300",
-        confirmButton: "hover:bg-blue-700 transition-colors",
-        cancelButton: "hover:bg-gray-600 transition-colors",
-      },
     });
-    if (result.isConfirmed) {
-      publishMutation.mutate(id);
-    }
+    if (result.isConfirmed) publishMutation.mutate(id);
   };
 
   const handleSearch = (e) => {
@@ -127,22 +142,145 @@ const ContentManagement = () => {
     setPage(1);
   };
 
-  // ✅ Updated color logic for draft = yellow, published = green
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "published":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "draft":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
-    }
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "short", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <img
+              src={row.original.thumbnail}
+              alt={row.original.title}
+              className="h-10 w-10 rounded-md object-cover mr-4"
+              onError={(e) => (e.target.src = "/default-thumbnail.png")}
+            />
+            <span className="text-sm font-medium dark:text-white line-clamp-2">
+              {row.original.title}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "author",
+        header: "Author",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <img
+              src={row.original.authorImage || "/default-avatar.png"}
+              alt={row.original.author}
+              className="h-8 w-8 rounded-full object-cover mr-3"
+              onError={(e) => (e.target.src = "/default-avatar.png")}
+            />
+            <span className="text-sm dark:text-white">
+              {row.original.author}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "createdAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {formatDate(row.original.createdAt)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) =>
+          isAdmin ? (
+            <button
+              disabled={!isAdmin}
+              onClick={() =>
+                handlePublishToggle(row.original._id, row.original.status)
+              }
+              title={`${
+                row.original.status === "published" ? "Unpublish" : "Publish"
+              } Blog`}
+              className={`hover:opacity-80 transition-opacity ${
+                isAdmin ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
+            >
+              <StatusBadge status={row.original.status} />
+            </button>
+          ) : (
+            <StatusBadge status={row.original.status} />
+          ),
+      },
+      {
+        accessorKey: "views",
+        header: "Views",
+        cell: ({ row }) => (
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {row.original.views?.toLocaleString()}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <div className="flex justify-end space-x-3">
+            <Link
+              to={`/dashboard/content-management/edit-blog/${row.original._id}`}
+              title="Edit"
+            >
+              <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </Link>
+            <Link
+              to={`/dashboard/content-management/blog-preview/${row.original._id}`}
+              title="Preview"
+            >
+              <Eye className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </Link>
+            {isAdmin && (
+              <button
+                onClick={() => handleDelete(row.original._id)}
+                title="Delete"
+              >
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </button>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [isAdmin]
+  );
+
+  const table = useReactTable({
+    data: data?.data || [],
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true,
+    pageCount: data?.totalPages || 0,
+    state: {
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: limit,
+      },
+    },
+    onPaginationChange: (updater) => {
+      const newState = updater({
+        pageIndex: page - 1,
+        pageSize: limit,
+      });
+      setPage(newState.pageIndex + 1);
+    },
+  });
 
   return (
     <div className="">
@@ -155,44 +293,44 @@ const ContentManagement = () => {
           Manage all your blog content in one place
         </p>
         {isVolunteer && (
-          <div className="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
+          <div className="mt-2 text-sm text-amber-600 dark:text-amber-400">
             Volunteer mode: You cannot delete or change publication status of
             blogs
           </div>
         )}
       </div>
 
-      {/* Status Filter */}
-      <div className="flex justify-between items-center mb-6">
+      {/* Filters and Search */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <form
           onSubmit={handleSearch}
-          className="flex items-center gap-2 w-full md:w-auto"
+          className="flex flex-col sm:flex-row gap-2 w-full md:w-auto"
         >
-          <div className="relative flex-1 md:w-72">
+          <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
               placeholder="Search title, content, or author..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors"
           >
             Search
           </button>
         </form>
 
-        <div className="flex items-center gap-3 mt-4 md:mt-0">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-gray-400" />
             <select
-              className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
+              className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md bg-white dark:bg-gray-700"
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);
@@ -207,7 +345,7 @@ const ContentManagement = () => {
 
           <Link
             to="/dashboard/content-management/add-blog"
-            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition-colors"
           >
             <PlusCircle className="mr-2 h-5 w-5" />
             New Blog
@@ -234,7 +372,7 @@ const ContentManagement = () => {
             </p>
             <button
               onClick={() => queryClient.refetchQueries(["blogs"])}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
             >
               Retry
             </button>
@@ -244,142 +382,47 @@ const ContentManagement = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Title
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Author
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Date
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Status
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Views
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                  </tr>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          <div className="flex items-center">
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                            {{
+                              asc: " 🔼",
+                              desc: " 🔽",
+                            }[header.column.getIsSorted()] ?? null}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {data.data.map((blog) => (
+                  {table.getRowModel().rows.map((row) => (
                     <tr
-                      key={blog._id}
+                      key={row.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden mr-4">
-                            <img
-                              className="h-full w-full object-cover"
-                              src={blog.thumbnail}
-                              alt={blog.title}
-                              onError={(e) => {
-                                e.target.src = "/default-thumbnail.png";
-                              }}
-                            />
-                          </div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
-                            {blog.title}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden mr-3">
-                            <img
-                              className="h-full w-full object-cover"
-                              src={blog.authorImage || "/default-avatar.png"}
-                              alt={blog.author}
-                              onError={(e) => {
-                                e.target.src = "/default-avatar.png";
-                              }}
-                            />
-                          </div>
-                          <div className="text-sm text-gray-900 dark:text-white">
-                            {blog.author}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDate(blog.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isAdmin ? (
-                          <button
-                            onClick={() =>
-                              handlePublishToggle(blog._id, blog.status)
-                            }
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              blog.status
-                            )} hover:opacity-80 transition-opacity`}
-                          >
-                            {blog.status.charAt(0).toUpperCase() +
-                              blog.status.slice(1)}
-                          </button>
-                        ) : (
-                          <span
-                            className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
-                              blog.status
-                            )}`}
-                          >
-                            {blog.status.charAt(0).toUpperCase() +
-                              blog.status.slice(1)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {blog.views?.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-3">
-                          <Link
-                            to={`/dashboard/content-management/edit-blog/${blog._id}`}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title="Edit"
-                          >
-                            <Edit className="h-5 w-5" />
-                          </Link>
-                          <Link
-                            to={`/dashboard/content-management/blog-preview/${blog._id}`}
-                            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-                            title="Preview"
-                          >
-                            <Eye className="h-5 w-5" />
-                          </Link>
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleDelete(blog._id)}
-                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-5 w-5" />
-                            </button>
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-6 py-4 whitespace-nowrap"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
                           )}
-                        </div>
-                      </td>
+                        </td>
+                      ))}
                     </tr>
                   ))}
                 </tbody>
@@ -393,7 +436,7 @@ const ContentManagement = () => {
                   <button
                     onClick={() => setPage((p) => Math.max(p - 1, 1))}
                     disabled={page === 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Previous
                   </button>
@@ -402,7 +445,7 @@ const ContentManagement = () => {
                       setPage((p) => Math.min(p + 1, data.totalPages))
                     }
                     disabled={page === data.totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Next
                   </button>
@@ -430,7 +473,7 @@ const ContentManagement = () => {
                       <button
                         onClick={() => setPage((p) => Math.max(p - 1, 1))}
                         disabled={page === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <span className="sr-only">Previous</span>
                         <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -453,9 +496,9 @@ const ContentManagement = () => {
                             <button
                               key={pageNum}
                               onClick={() => setPage(pageNum)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                                 page === pageNum
-                                  ? "z-10 bg-blue-50 dark:bg-blue-900 border-blue-500 dark:border-blue-600 text-blue-600 dark:text-blue-300"
+                                  ? "z-10 bg-red-50 dark:bg-red-900 border-red-500 dark:border-red-600 text-red-600 dark:text-red-300"
                                   : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                               }`}
                             >
@@ -469,7 +512,7 @@ const ContentManagement = () => {
                           setPage((p) => Math.min(p + 1, data.totalPages))
                         }
                         disabled={page === data.totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <span className="sr-only">Next</span>
                         <ChevronRight className="h-5 w-5" aria-hidden="true" />

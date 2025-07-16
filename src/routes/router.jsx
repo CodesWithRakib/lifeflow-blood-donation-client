@@ -36,6 +36,7 @@ import EditBlog from "../pages/Dashboard/Admin/EditBlog";
 // Common Components
 import Error from "../pages/error/Error";
 import PrivateRoute from "../middleware/PrivateRoute";
+import MyDonations from "../pages/Requests/MyDonations";
 
 // Routing Configuration
 const router = createBrowserRouter([
@@ -107,6 +108,7 @@ const router = createBrowserRouter([
       // ========= Donor Routes =========
       { path: "create-donation-request", element: <CreateDonationRequest /> },
       { path: "my-donation-requests", element: <MyDonationRequests /> },
+      { path: "my-donations", element: <MyDonations /> },
       { path: "edit-donation/:id", element: <EditDonationRequest /> },
 
       // ========= Admin Routes =========

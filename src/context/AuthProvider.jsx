@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./AuthContext";
 import {
   createUserWithEmailAndPassword,
@@ -10,9 +9,7 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { useQuery } from "@tanstack/react-query";
 import useAxios from "../hooks/useAxios";
-import { useEffect } from "react";
 import { app } from "../firebase/firebase.config";
 
 const auth = getAuth(app);
@@ -20,40 +17,87 @@ const auth = getAuth(app);
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState(null);
+  const [roleLoading, setRoleLoading] = useState(false);
   const axiosSecure = useAxios();
 
-  // Using TanStack Query only for fetching user role
-  const {
-    data: userRole,
-    refetch: refetchUserRole,
-    isLoading: roleLoading,
-  } = useQuery({
-    queryKey: ["userRole", user?.email],
-    queryFn: async () => {
+  const fetchUserRole = useCallback(
+    async (email) => {
+      if (!email) return null;
+
+      setRoleLoading(true);
       try {
         const { data } = await axiosSecure.get("/user");
-        return data.data.role;
+        setRole(data?.data?.role || null);
+        return data?.data?.role;
       } catch (error) {
         console.error("Error fetching user role:", error);
+        setRole(null);
         return null;
+      } finally {
+        setRoleLoading(false);
       }
     },
-    enabled: !!user?.email, // Only fetch when user email exists
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
-  });
+    [axiosSecure]
+  );
 
-  const logIn = (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const handleAuthChange = useCallback(
+    async (currentUser) => {
+      setUser(currentUser);
+
+      if (currentUser?.email) {
+        try {
+          // 1. First get JWT token
+          const { data: tokenData } = await axiosSecure.post("/jwt", {
+            email: currentUser.email,
+          });
+
+          if (tokenData?.token) {
+            // 2. Then fetch user role
+            await fetchUserRole(currentUser.email);
+          }
+        } catch (error) {
+          console.error("Auth state change error:", error);
+          setRole(null);
+        }
+      } else {
+        setRole(null);
+      }
+
+      setLoading(false);
+    },
+    [axiosSecure, fetchUserRole]
+  );
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, handleAuthChange);
+    return () => unsubscribe();
+  }, [handleAuthChange]);
+
+  const logIn = async (email, password) => {
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await handleAuthChange(userCredential.user);
+      return userCredential;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logOut = async () => {
+    setLoading(true);
     try {
       await signOut(auth);
       await axiosSecure.post("/logout");
       setUser(null);
-    } catch (error) {
-      console.error("Error during logout:", error);
-      throw error;
+      setRole(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,47 +113,6 @@ const AuthProvider = ({ children }) => {
     return sendPasswordResetEmail(auth, email);
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-
-      if (currentUser?.email) {
-        try {
-          const { data } = await axiosSecure.post("/jwt", {
-            email: currentUser.email,
-          });
-
-          if (data?.token) {
-            // NEW: Wait until role exists (max 5 tries)
-            let attempts = 0;
-            let role = null;
-
-            while (!role && attempts < 5) {
-              try {
-                const res = await axiosSecure.get("/user");
-                role = res.data?.data?.role;
-                if (role) break;
-              } catch (err) {
-                console.warn("Waiting for role to be created...");
-              }
-
-              attempts++;
-              await new Promise((resolve) => setTimeout(resolve, 1000)); // wait 1 sec
-            }
-
-            await refetchUserRole(); // Now force update
-          }
-        } catch (error) {
-          console.error("JWT or role fetch issue:", error);
-        }
-      }
-
-      setLoading(false); // Move this here after role is fetched
-    });
-
-    return () => unsubscribe();
-  }, [axiosSecure, refetchUserRole]);
-
   const authData = {
     user,
     setUser,
@@ -119,8 +122,9 @@ const AuthProvider = ({ children }) => {
     createUser,
     updateUser,
     resetPassword,
-    userRole,
+    userRole: role,
     roleLoading,
+    refetchRole: () => user?.email && fetchUserRole(user.email),
   };
 
   return (

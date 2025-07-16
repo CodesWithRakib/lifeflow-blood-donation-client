@@ -1,4 +1,3 @@
-// AddBlog.jsx
 import {
   BookPlus,
   Edit,
@@ -168,7 +167,7 @@ const AddBlog = () => {
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Yes",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#ef4444", // Red
       cancelButtonColor: "#6b7280",
     });
 
@@ -197,7 +196,7 @@ const AddBlog = () => {
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Delete",
-      confirmButtonColor: "#ef4444",
+      confirmButtonColor: "#ef4444", // Red
       cancelButtonColor: "#6b7280",
     });
 
@@ -217,7 +216,7 @@ const AddBlog = () => {
   if (isLoading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto ">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -235,7 +234,7 @@ const AddBlog = () => {
             onClick={() => setActiveTab("create")}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
               activeTab === "create"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                ? "border-red-500 text-red-600 dark:text-red-400 dark:border-red-400"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
             }`}
           >
@@ -246,7 +245,7 @@ const AddBlog = () => {
             onClick={() => setActiveTab("manage")}
             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === "manage"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400"
+                ? "border-red-500 text-red-600 dark:text-red-400 dark:border-red-400"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300"
             }`}
           >
@@ -277,7 +276,7 @@ const AddBlog = () => {
                     message: "Title must be at least 10 characters",
                   },
                 })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Enter blog title"
               />
               {errors.title && (
@@ -352,18 +351,17 @@ const AddBlog = () => {
                         height: 400,
                         theme: "dark",
                         toolbarAdaptive: false,
+                        enter: "P",
+                        defaultActionOnPaste: "insert_as_text",
                         buttons: [
                           "bold",
                           "italic",
                           "underline",
-                          "strikethrough",
                           "|",
                           "ul",
                           "ol",
                           "|",
-                          "font",
                           "fontsize",
-                          "brush",
                           "paragraph",
                           "|",
                           "align",
@@ -371,14 +369,32 @@ const AddBlog = () => {
                           "indent",
                           "|",
                           "image",
-                          "video",
                           "table",
                           "link",
                           "|",
                           "undo",
                           "redo",
-                          "|",
+                        ],
+                        removeButtons: [
                           "source",
+                          "print",
+                          "about",
+                          "copyformat",
+                          "font",
+                          "file",
+                          "video",
+                          "eraser",
+                          "superscript",
+                          "subscript",
+                          "symbol",
+                          "cut",
+                          "selectall",
+                        ],
+                        disablePlugins: [
+                          "paste",
+                          "pasteStorage",
+                          "formatPainter",
+                          "media",
                         ],
                       }}
                     />
@@ -407,7 +423,7 @@ const AddBlog = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 disabled:opacity-70 transition-colors"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-2 disabled:opacity-70 transition-colors"
               >
                 <Save className="w-4 h-4" />
                 {isSubmitting ? "Creating..." : "Create Blog"}
@@ -425,7 +441,7 @@ const AddBlog = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full sm:w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                className="block w-full sm:w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white text-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="draft">Draft</option>
@@ -433,7 +449,7 @@ const AddBlog = () => {
               </select>
               <button
                 onClick={() => setActiveTab("create")}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center gap-2 text-sm whitespace-nowrap"
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center gap-2 text-sm whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
                 New Post
@@ -447,68 +463,129 @@ const AddBlog = () => {
               description="Create your first blog post to get started"
               actionText="Create New Blog"
               onAction={() => setActiveTab("create")}
+              actionColor="red"
             />
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredBlogs.map((blog) => (
                 <div
                   key={blog._id}
-                  className="border rounded-lg overflow-hidden shadow-sm bg-white dark:bg-gray-700 hover:shadow-md transition-shadow"
+                  className="border rounded-lg overflow-hidden shadow-sm bg-white dark:bg-gray-700 hover:shadow-md transition-shadow flex flex-col h-full"
                 >
-                  <div className="relative aspect-video">
+                  {/* Thumbnail Container - Fixed Aspect Ratio */}
+                  <div className="relative h-48 w-full bg-gray-100 dark:bg-gray-600 overflow-hidden">
                     <img
-                      src={blog.thumbnail}
+                      src={
+                        blog.thumbnail ||
+                        "https://via.placeholder.com/600x315?text=No+Thumbnail"
+                      }
                       alt={blog.title}
-                      className="h-full w-full object-cover"
+                      className="absolute h-full w-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://via.placeholder.com/600x315?text=No+Thumbnail";
+                      }}
                     />
                     <span
-                      className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
+                      className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium capitalize ${
                         blog.status === "published"
                           ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200"
                       }`}
                     >
                       {blog.status}
                     </span>
                   </div>
-                  <div className="p-4 space-y-3">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white line-clamp-2">
+
+                  {/* Card Content - Flex column with consistent spacing */}
+                  <div className="p-4 flex flex-col flex-grow">
+                    {/* Title with fixed line height */}
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2 mb-2 min-h-[3rem]">
                       {blog.title}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                      {blog.content.replace(/<[^>]*>/g, "").slice(0, 120)}
-                    </p>
-                    <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
-                      <span>
+
+                    {/* Content Preview with fixed height */}
+                    <div className="mb-3 h-16 overflow-hidden">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">
+                        {blog.content.replace(/<[^>]*>/g, "").slice(0, 150) ||
+                          "No content available"}
+                      </p>
+                    </div>
+
+                    {/* Meta Information */}
+                    <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 mt-auto">
+                      <span className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
                         {new Date(blog.createdAt).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
                           day: "numeric",
                         })}
                       </span>
-                      <span>{blog.views} views</span>
+                      <span className="flex items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                        {blog.views} views
+                      </span>
                     </div>
-                    <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-between pt-3 mt-3 border-t border-gray-200 dark:border-gray-600">
                       <button
                         onClick={() =>
                           navigate(
                             `/dashboard/content-management/edit-blog/${blog._id}`
                           )
                         }
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex items-center gap-1 transition-colors"
                       >
-                        <Edit className="w-3 h-3" /> Edit
+                        <Edit className="w-4 h-4" />
+                        <span className="hidden sm:inline">Edit</span>
                       </button>
-                      <div className="flex gap-3">
+
+                      <div className="flex gap-2 sm:gap-3">
                         {blog.status === "draft" ? (
                           <button
                             disabled={!isAdmin}
                             onClick={() =>
                               handleStatusChange(blog._id, "published")
                             }
-                            className="text-sm text-green-600 dark:text-green-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                            className="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
                           >
-                            <BookPlus className="w-3 h-3" /> Publish
+                            <BookPlus className="w-4 h-4" />
+                            <span className="hidden sm:inline">Publish</span>
                           </button>
                         ) : (
                           <button
@@ -516,17 +593,19 @@ const AddBlog = () => {
                             onClick={() =>
                               handleStatusChange(blog._id, "draft")
                             }
-                            className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                            className="text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
                           >
-                            <EyeOff className="w-3 h-3" /> Unpublish
+                            <EyeOff className="w-4 h-4" />
+                            <span className="hidden sm:inline">Unpublish</span>
                           </button>
                         )}
                         <button
                           disabled={!isAdmin}
                           onClick={() => handleDeleteBlog(blog._id)}
-                          className="text-sm text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 disabled:opacity-50"
+                          className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 flex items-center gap-1 disabled:opacity-50 transition-colors"
                         >
-                          <Trash2 className="w-3 h-3" /> Delete
+                          <Trash2 className="w-4 h-4" />
+                          <span className="hidden sm:inline">Delete</span>
                         </button>
                       </div>
                     </div>
