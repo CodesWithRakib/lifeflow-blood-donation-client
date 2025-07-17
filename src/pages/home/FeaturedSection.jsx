@@ -114,7 +114,7 @@ const FeaturedSection = () => {
             className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200 mb-6"
           >
             <Droplet className="w-4 h-4 mr-2" />
-            Why Choose Donorly
+            Why Choose LifeFlow
           </motion.div>
 
           <motion.h2

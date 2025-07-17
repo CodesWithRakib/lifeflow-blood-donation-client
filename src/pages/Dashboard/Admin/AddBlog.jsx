@@ -18,6 +18,7 @@ import useAuth from "../../../hooks/useAuth";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
 import useAxios from "../../../hooks/useAxios";
+import useTitle from "../../../hooks/useTitle";
 
 const AddBlog = () => {
   const axiosSecure = useAxios();
@@ -34,6 +35,8 @@ const AddBlog = () => {
   const [contentValidationError, setContentValidationError] = useState(false);
   const [isEditorReady, setIsEditorReady] = useState(false);
   const [activeTab, setActiveTab] = useState("create");
+
+  useTitle("Add Blog | LifeFlow - Blood Donation");
 
   const {
     register,

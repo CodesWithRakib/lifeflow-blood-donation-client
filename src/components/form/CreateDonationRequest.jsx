@@ -7,12 +7,15 @@ import toast from "react-hot-toast";
 import districts from "../../constants/districts";
 import upazilas from "../../constants/upazilas";
 import useRole from "../../hooks/useRole";
+import useTitle from "../../hooks/useTitle";
 
 const CreateDonationRequest = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { isBlocked } = useRole();
   const axiosSecure = useAxios();
+
+  useTitle("Create Donation Request | LifeFlow - Blood Donation");
   const {
     register,
     handleSubmit,

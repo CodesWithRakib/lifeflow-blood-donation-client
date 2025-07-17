@@ -10,9 +10,12 @@ import {
 import { motion } from "motion/react";
 import { format } from "date-fns";
 import RequestCardSkeleton from "./RequestCardSkeleton";
+import useTitle from "../../hooks/useTitle";
 
 const DonationRequestsPublic = () => {
   const axiosSecure = useAxios();
+
+  useTitle("Donation Requests | LifeFlow - Blood Donation");
 
   const {
     data: requests = [],

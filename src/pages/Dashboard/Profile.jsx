@@ -10,6 +10,7 @@ import districts from "../../constants/districts";
 import upazilas from "../../constants/upazilas";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ParticleWaveSpinner from "../../components/common/ParticleWaveSpinner";
+import useTitle from "../../hooks/useTitle";
 
 const Profile = () => {
   const { user: authUser, updateUser } = useAuth();
@@ -18,6 +19,8 @@ const Profile = () => {
   const [editMode, setEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  useTitle("Profile | LifeFlow - Blood Donation");
 
   const [formData, setFormData] = useState({
     name: "",

@@ -20,7 +20,7 @@ const Footer = () => {
               className="flex items-center gap-2 text-[#F59E0B] hover:opacity-90 transition"
             >
               <HeartHandshake className="h-8 w-8" />
-              <span className="text-2xl font-bold">Donorly</span>
+              <span className="text-2xl font-bold">LifeFlow</span>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
               Connecting blood donors with those in need.
@@ -29,7 +29,7 @@ const Footer = () => {
             </p>
             <div className="flex gap-4 mt-2">
               <FooterIcon
-                href="https://facebook.com/donorly"
+                href="https://facebook.com/codeswithrakib"
                 icon={<Facebook />}
               />
               <FooterIcon
@@ -133,8 +133,8 @@ const Footer = () => {
                   />
                 </svg>
               }
-              label="support@donorly.com"
-              link="mailto:support@donorly.com"
+              label="support@LifeFlow.com"
+              link="mailto:support@LifeFlow.com"
             />
           </FooterColumn>
         </div>
@@ -142,7 +142,7 @@ const Footer = () => {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-400">
           <p>
-            &copy; {new Date().getFullYear()} Donorly. All rights reserved.
+            &copy; {new Date().getFullYear()} LifeFlow. All rights reserved.
             <span className="block sm:inline ml-1">
               Made with <span className="text-[#DC2626]">❤</span> to save lives.
             </span>

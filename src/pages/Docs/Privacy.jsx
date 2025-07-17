@@ -1,4 +1,7 @@
+import useTitle from "../../hooks/useTitle";
+
 const Privacy = () => {
+  useTitle("Privacy Policy | LifeFlow - Blood Donation");
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
@@ -54,7 +57,7 @@ const Privacy = () => {
         <h2 className="text-xl font-semibold mb-4">6. Contact Us</h2>
         <p>
           If you have questions about this Privacy Policy, please contact us at
-          privacy@donorly.com.
+          privacy@lifeflow.com.
         </p>
       </div>
     </div>

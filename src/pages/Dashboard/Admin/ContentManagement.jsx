@@ -27,6 +27,7 @@ import useRole from "../../../hooks/useRole";
 import useAxios from "../../../hooks/useAxios";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
+import useTitle from "../../../hooks/useTitle";
 
 const StatusBadge = ({ status }) => {
   const base = "px-2 py-1 text-xs font-medium rounded-full";
@@ -75,6 +76,8 @@ const ContentManagement = () => {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [searchInput, setSearchInput] = useState("");
+
+  useTitle("Content Management | LifeFlow - Blood Donation");
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["blogs", page, limit, search, status],

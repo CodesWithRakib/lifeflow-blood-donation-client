@@ -22,10 +22,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import useTitle from "../../../hooks/useTitle";
 
 const AdminHome = () => {
   const axiosSecure = useAxios();
   const { user, loading: authLoading, userRole, roleLoading } = useAuth();
+
+  useTitle("Admin Dashboard | LifeFlow - Blood Donation");
 
   // ✅ Fetch stats
   const {

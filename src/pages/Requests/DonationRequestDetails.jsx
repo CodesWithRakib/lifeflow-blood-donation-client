@@ -20,6 +20,7 @@ import useAuth from "../../hooks/useAuth";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import ErrorMessage from "../../components/common/ErrorMessage";
 import BloodDropIcon from "../../components/common/BloodDropIcon";
+import useTitle from "../../hooks/useTitle";
 
 const DonationRequestDetails = () => {
   const { id } = useParams();
@@ -27,6 +28,7 @@ const DonationRequestDetails = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  useTitle("Donation Request Details | LifeFlow - Blood Donation");
   const {
     data: request,
     isLoading,

@@ -5,6 +5,7 @@ import useAxios from "../../hooks/useAxios";
 import DonorCard from "./DonorCard";
 import upazilas from "../../constants/upazilas";
 import districts from "../../constants/districts";
+import useTitle from "../../hooks/useTitle";
 
 const SearchPage = () => {
   const axiosSecure = useAxios();
@@ -14,6 +15,7 @@ const SearchPage = () => {
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  useTitle("Search Donors | LifeFlow - Blood Donation");
   // Blood group options
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 

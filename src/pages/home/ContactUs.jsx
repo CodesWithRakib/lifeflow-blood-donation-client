@@ -147,7 +147,7 @@ const ContactUs = () => {
                 <ContactInfo
                   icon={<Mail className="w-5 h-5" />}
                   title="Email Us"
-                  detail="support@donorly.com"
+                  detail="support@lifeflow.com"
                   subtitle="Typically replies within 24 hours"
                 />
                 <ContactInfo

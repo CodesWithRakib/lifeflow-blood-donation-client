@@ -1,7 +1,9 @@
 import { motion } from "motion/react";
 import { HeartHandshake, Users, Droplet } from "lucide-react";
+import useTitle from "../../hooks/useTitle";
 
 const AboutUs = () => {
+  useTitle("About Us | LifeFlow - Blood Donation");
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <motion.div
@@ -11,7 +13,7 @@ const AboutUs = () => {
         className="text-center mb-12"
       >
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          About <span className="text-red-600">Donorly</span>
+          About <span className="text-red-600">LifeFlow</span>
         </h1>
         <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
           Connecting blood donors with recipients to save lives since 2023
@@ -58,8 +60,8 @@ const AboutUs = () => {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-bold mb-4">Our Story</h2>
         <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Donorly was founded in 2023 by a group of healthcare professionals and
-          tech enthusiasts who witnessed the challenges in blood donation
+          LifeFlow was founded in 2023 by a group of healthcare professionals
+          and tech enthusiasts who witnessed the challenges in blood donation
           systems firsthand.
         </p>
         <p className="text-gray-600 dark:text-gray-300">

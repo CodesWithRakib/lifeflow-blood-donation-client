@@ -23,6 +23,7 @@ import useAxios from "../../../hooks/useAxios";
 import useAuth from "../../../hooks/useAuth";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
+import useTitle from "../../../hooks/useTitle";
 
 const MySwal = withReactContent(Swal);
 
@@ -50,6 +51,7 @@ const MyDonationRequests = () => {
   const { user } = useAuth();
   console.log(user?.email);
 
+  useTitle("My Donation Requests");
   const {
     data: response = {},
     isLoading,

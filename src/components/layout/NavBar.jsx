@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Moon,
   Sun,
+  Droplets,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import useAuth from "../../hooks/useAuth";
@@ -131,15 +132,15 @@ const Navbar = () => {
           <Link
             to="/"
             className="flex items-center gap-2 text-amber-600 hover:opacity-90 transition-opacity"
-            aria-label="Donorly Home"
+            aria-label="LifeFlow Home"
           >
-            <Droplet className="h-7 w-7" />
+            <Droplets className="h-7 w-7 text-red-500" />
             <motion.span
               className="text-xl font-bold tracking-tight"
               whileHover={{ scale: 1.03 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              Donorly
+              LifeFlow
             </motion.span>
           </Link>
 

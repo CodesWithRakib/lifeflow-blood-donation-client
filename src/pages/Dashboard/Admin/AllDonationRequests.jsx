@@ -30,6 +30,7 @@ import useAxios from "../../../hooks/useAxios";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import EmptyState from "../../../components/common/EmptyState";
 import useRole from "../../../hooks/useRole";
+import useTitle from "../../../hooks/useTitle";
 
 const MySwal = withReactContent(Swal);
 
@@ -53,6 +54,8 @@ const AllDonationRequests = () => {
   const [filter, setFilter] = useState("all");
   const axiosSecure = useAxios();
   const { isAdmin, isVolunteer } = useRole();
+
+  useTitle("All Donation Requests | LifeFlow - Blood Donation");
 
   const {
     data: response = {},

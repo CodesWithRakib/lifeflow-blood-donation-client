@@ -31,6 +31,7 @@ import {
   getSortedRowModel,
 } from "@tanstack/react-table";
 import { useMemo } from "react";
+import useTitle from "../../../hooks/useTitle";
 
 const DonorHome = () => {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ const DonorHome = () => {
   const { user } = useAuth();
   const { data: userData } = useUser();
 
+  useTitle("Donor Home | LifeFlow - Blood Donation");
   const {
     data: donationRequests,
     isLoading,

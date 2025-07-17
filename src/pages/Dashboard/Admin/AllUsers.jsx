@@ -31,6 +31,7 @@ import {
 } from "@tanstack/react-table";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import Pagination from "../../../components/common/Pagination";
+import useTitle from "../../../hooks/useTitle";
 
 const AllUsers = () => {
   const axiosSecure = useAxios();
@@ -39,6 +40,8 @@ const AllUsers = () => {
   const [page, setPage] = useState(1);
   const [activeMenu, setActiveMenu] = useState(null);
   const limit = 10;
+
+  useTitle("All Users | LifeFlow - Blood Donation");
 
   // Fetch users
   const {

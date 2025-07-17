@@ -21,6 +21,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import useAxios from "../../hooks/useAxios";
 import { useEffect, useRef, useState } from "react";
+import useTitle from "../../hooks/useTitle";
 
 const ErrorMessage = ({
   message = "An unexpected error occurred",
@@ -65,6 +66,8 @@ const BlogPreview = () => {
   const axiosSecure = useAxios();
   const queryClient = useQueryClient();
   const contentRef = useRef(null);
+
+  useTitle("Blog details | LifeFlow - Blood Donation");
 
   useEffect(() => {
     const observer = new IntersectionObserver(

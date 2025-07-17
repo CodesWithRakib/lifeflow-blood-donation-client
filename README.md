@@ -1,12 +1,12 @@
-# 🩸 Donorly - Blood Donation App
+# 🩸 LifeFlow - Blood Donation App
 
-**Donorly** is a full-featured MERN stack application that connects blood donors, volunteers, and patients in need. It includes a role-based dashboard system, donation request management, public donor search, blog CMS, and Stripe-based fundraising — all secured and beautifully designed.
+**LifeFlow** is a full-featured MERN stack application that connects blood donors, volunteers, and patients in need. It includes a role-based dashboard system, donation request management, public donor search, blog CMS, and Stripe-based fundraising — all secured and beautifully designed.
 
 ---
 
 ## 🔗 Live Preview
 
-🌐 **Live URL**: [Donorly Live](https://blood-donation-full-stack.web.app/)
+🌐 **Live URL**: [LifeFlow Live](https://blood-donation-full-stack.web.app/)
 
 🔐 **Admin Credentials**  
 **Email**: `admin@blood.com`  

@@ -17,6 +17,7 @@ import useAxios from "../../../hooks/useAxios";
 import useAuth from "../../../hooks/useAuth";
 import uploadImageToImageBB from "../../../utils/imageUpload";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
+import useTitle from "../../../hooks/useTitle";
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -32,6 +33,7 @@ const EditBlog = () => {
   const [previewImage, setPreviewImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useTitle("Edit Blog | LifeFlow - Blood Donation");
   const {
     register,
     handleSubmit,

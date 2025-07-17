@@ -15,6 +15,7 @@ import {
 import { FaRegCalendarAlt } from "react-icons/fa";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import useTitle from "../../hooks/useTitle";
 
 const Blogs = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,6 +31,8 @@ const Blogs = () => {
   // State for UI controls
   const [localSearch, setLocalSearch] = useState(search);
   const [showFilters, setShowFilters] = useState(false);
+
+  useTitle("Blogs | LifeFlow - Blood Donation");
 
   // Fetch blogs using TanStack Query
   const {

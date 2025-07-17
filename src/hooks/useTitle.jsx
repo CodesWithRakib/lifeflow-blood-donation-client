@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 
-const useTitle = (title, defaultTitle = "Donorly Blood Donation") => {
+const useTitle = (title, defaultTitle = "LifeFlow - Blood Donation") => {
   const location = useLocation();
 
   useEffect(() => {
