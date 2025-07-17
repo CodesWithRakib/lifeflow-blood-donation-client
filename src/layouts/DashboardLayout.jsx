@@ -57,6 +57,7 @@ const DashboardLayout = () => {
       path: "/dashboard",
       roles: ["admin", "donor", "volunteer"],
       color: "text-purple-500",
+      exact: true,
     },
     {
       title: "Profile",
@@ -70,7 +71,7 @@ const DashboardLayout = () => {
       icon: <HeartPulse className="w-5 h-5" />,
       path: "/dashboard/my-donations",
       roles: ["donor"],
-      color: "text-pink-500",
+      color: "text-red-500",
     },
     {
       title: "Create Request",
@@ -286,23 +287,29 @@ const DashboardLayout = () => {
                 <nav className="flex flex-col gap-1 mb-6">
                   {menuItems
                     .filter((item) => item.roles.includes(userRole))
-                    .map((item) => (
-                      <NavLink
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={({ isActive }) =>
-                          `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium ${
-                            isActive
-                              ? "bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-l-4 border-amber-500"
-                              : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          }`
-                        }
-                      >
-                        <span className={item.color}>{item.icon}</span>
-                        {item.title}
-                      </NavLink>
-                    ))}
+                    .map((item) => {
+                      const color = item.color
+                        .replace("text-", "")
+                        .split("-")[0];
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          end={item.exact} // 👈 Only exact match if specified
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={({ isActive }) =>
+                            `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                              isActive
+                                ? `bg-${color}-100 dark:bg-${color}-900/20 text-${color}-600 dark:text-${color}-300 border-l-4 border-${color}-500`
+                                : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            }`
+                          }
+                        >
+                          <span className={item.color}>{item.icon}</span>
+                          {item.title}
+                        </NavLink>
+                      );
+                    })}
                 </nav>
 
                 <div className="space-y-1">
@@ -337,14 +344,16 @@ const DashboardLayout = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="w-full">
+      <main className="w-full overflow-x-hidden">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 md:p-6 min-h-[calc(100vh-64px)]"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4  min-h-screen"
         >
-          <Outlet />
+          <div className="w-full overflow-x-auto">
+            <Outlet />
+          </div>
         </motion.div>
       </main>
     </div>

@@ -81,7 +81,7 @@ const CreateDonationRequest = () => {
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md space-y-6 border border-gray-200 dark:border-gray-700"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <label className="block mb-2 font-medium text-gray-700 dark:text-gray-300">
               Requester Name

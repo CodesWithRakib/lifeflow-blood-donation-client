@@ -165,7 +165,7 @@ const FundingPage = () => {
       </div>
 
       {/* Funding Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow  overflow-hidden">
         <FundingTable
           funds={funds}
           loading={fundsLoading}
