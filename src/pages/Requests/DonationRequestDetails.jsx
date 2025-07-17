@@ -52,7 +52,6 @@ const DonationRequestDetails = () => {
       return res.data;
     },
     onSuccess: () => {
-      toast.success("Donation confirmed!");
       navigate("/dashboard/my-donations");
     },
     onError: (error) => {
@@ -80,29 +79,80 @@ const DonationRequestDetails = () => {
       return toast.error("You cannot donate to your own request.");
     }
 
-    // Enhanced confirmation dialog
     Swal.fire({
       title: "Confirm Your Donation Commitment",
       html: `
-      <div class="text-left space-y-3">
-        <p class="font-medium">You're committing to donate for:</p>
-        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-          <p class="font-semibold">${request.recipientName}</p>
+  <div class="text-left space-y-4">
+    <!-- Donor Information Section -->
+    <div class="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/20">
+      <h3 class="font-medium text-blue-800 dark:text-blue-200 mb-3">Your Information</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+          <input 
+            type="text" 
+            value="${user?.displayName || "Not provided"}" 
+            readonly
+            class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white text-sm"
+          >
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+          <input 
+            type="email" 
+            value="${user?.email || "Not provided"}" 
+            readonly
+            class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-gray-900 dark:text-white text-sm"
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Donation Details Section -->
+    <p class="font-medium text-gray-700 dark:text-gray-200">You're committing to donate for:</p>
+    <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-xl border border-gray-200 dark:border-gray-600">
+      <div class="flex items-start gap-3">
+        ${
+          user?.photoURL
+            ? `<img src="${user.photoURL}" class="w-10 h-10 rounded-full object-cover" alt="Recipient">`
+            : ""
+        }
+        <div>
+          <p class="font-semibold text-gray-900 dark:text-white">${
+            request.recipientName
+          }</p>
           <p class="text-sm text-gray-600 dark:text-gray-300">${
             request.hospitalName
           }</p>
-          <p class="text-sm mt-1">
-            <span class="font-medium">When:</span> 
-            ${format(new Date(request.date), "PPP")} at ${request.time}
-          </p>
-        </div>
-        <div class="p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg">
-          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
-            Please ensure you're available on the specified date and meet all donation requirements.
-          </p>
+          <div class="mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            ${format(new Date(request.date), "PPP")}
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            ${request.time}
+          </div>
         </div>
       </div>
-    `,
+    </div>
+
+    <!-- Warning Section -->
+    <div class="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800">
+      <div class="flex gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+          Please ensure you're available on the specified date and meet all donation requirements.
+        </p>
+      </div>
+    </div>
+  </div>
+`,
       icon: "question",
       showCancelButton: true,
       confirmButtonColor: "#E53E3E",
@@ -111,19 +161,29 @@ const DonationRequestDetails = () => {
       cancelButtonText: "Cancel",
       focusConfirm: false,
       showLoaderOnConfirm: true,
-      preConfirm: () => {
-        return mutation.mutateAsync({
-          donor: {
-            name: user?.displayName,
-            email: user?.email,
-            avatar: user?.photoURL,
-          },
-          status: "inprogress",
-        });
+      preConfirm: async () => {
+        try {
+          const result = await mutation.mutateAsync({
+            donor: {
+              name: user?.displayName || "Anonymous Donor",
+              email: user?.email || "no-email-provided@example.com",
+              avatar: user?.photoURL || null,
+            },
+            status: "inprogress",
+            donationId: id,
+          });
+          return result;
+        } catch (error) {
+          Swal.showValidationMessage(`Request failed: ${error.message}`);
+          return false;
+        }
       },
       customClass: {
-        popup: "rounded-xl",
-        htmlContainer: "text-left",
+        popup: "rounded-xl !bg-white dark:!bg-gray-800",
+        htmlContainer: "!text-left",
+        title: "!text-gray-900 dark:!text-white",
+        closeButton:
+          "!text-gray-400 hover:!text-gray-900 dark:hover:!text-white",
       },
     }).then((result) => {
       if (result.isConfirmed && result.value) {

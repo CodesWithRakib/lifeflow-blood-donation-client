@@ -136,7 +136,7 @@ const Blogs = () => {
 
       {/* Search and Filter Bar */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between  ">
           {/* Search Input */}
           <div className="relative w-full md:w-96">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

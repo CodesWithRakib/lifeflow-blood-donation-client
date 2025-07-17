@@ -66,6 +66,13 @@ const DashboardLayout = () => {
       color: "text-blue-500",
     },
     {
+      title: "My Donations",
+      icon: <HeartPulse className="w-5 h-5" />,
+      path: "/dashboard/my-donations",
+      roles: ["donor"],
+      color: "text-pink-500",
+    },
+    {
       title: "Create Request",
       icon: <PlusCircle className="w-5 h-5" />,
       path: "/dashboard/create-donation-request",
