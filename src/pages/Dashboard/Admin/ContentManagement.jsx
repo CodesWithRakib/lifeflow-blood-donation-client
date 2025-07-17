@@ -125,6 +125,14 @@ const ContentManagement = () => {
         confirmButtonColor: "#dc2626",
         cancelButtonColor: "#6b7280",
         confirmButtonText: "Delete",
+        background:
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "#1f2937"
+            : "#ffffff",
+        color:
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "#ffffff"
+            : "#000000",
       });
       if (result.isConfirmed) deleteMutation.mutate(id);
     },
@@ -144,6 +152,14 @@ const ContentManagement = () => {
         confirmButtonText: `Yes, ${
           newStatus === "published" ? "Publish" : "Unpublish"
         }`,
+        background:
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "#1f2937"
+            : "#ffffff",
+        color:
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "#ffffff"
+            : "#000000",
       });
       if (result.isConfirmed) publishMutation.mutate(id);
     },
@@ -345,7 +361,7 @@ const ContentManagement = () => {
   });
   if (isLoading) return <LoadingSpinner />;
   return (
-    <div className="text-gray-900 dark:text-gray-100">
+    <div className="max-w-screen-2xl mx-auto px-4 text-gray-900 dark:text-gray-100">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

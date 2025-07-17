@@ -249,7 +249,7 @@ const MyDonationRequests = () => {
               </thead>
 
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {requests.map((req) => (
+                {requests?.map((req) => (
                   <tr
                     key={req._id}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150"

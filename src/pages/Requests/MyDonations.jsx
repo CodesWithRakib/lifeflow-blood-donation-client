@@ -55,7 +55,7 @@ const MyDonations = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-screen-2xl mx-auto px-4 ">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
@@ -249,7 +249,7 @@ const MyDonations = () => {
                       <p className="text-sm text-green-700 dark:text-green-300">
                         Successfully donated on{" "}
                         {format(
-                          new Date(donation.donatedAt),
+                          new Date(donation?.donor.donatedAt),
                           "PPP 'at' h:mm a"
                         )}
                         . Thank you for saving lives!

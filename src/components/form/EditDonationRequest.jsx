@@ -116,7 +116,7 @@ const EditDonationRequest = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-screen-2xl mx-auto px-4">
       <h1 className="text-2xl font-bold text-amber-600 dark:text-amber-500 mb-6">
         Edit Donation Request
       </h1>

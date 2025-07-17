@@ -270,6 +270,14 @@ const AllDonationRequests = () => {
       confirmButtonText: "Delete Request",
       cancelButtonText: "Cancel",
       reverseButtons: true,
+      background:
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "#1f2937"
+          : "#ffffff",
+      color:
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "#ffffff"
+          : "#000000",
     });
 
     if (result.isConfirmed) {
@@ -306,7 +314,7 @@ const AllDonationRequests = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="max-w-screen-2xl mx-auto px-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">

@@ -184,7 +184,14 @@ const EditBlog = () => {
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Delete Permanently",
-      background: "#ffffff",
+      background:
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "#1f2937"
+          : "#ffffff",
+      color:
+        document.documentElement.getAttribute("data-theme") === "dark"
+          ? "#ffffff"
+          : "#000000",
       customClass: {
         popup: "dark:bg-gray-800 dark:text-white",
         title: "dark:text-white",
@@ -262,7 +269,7 @@ const EditBlog = () => {
   const canEdit = isAdmin || isAuthor;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-screen-2xl mx-auto px-4 ">
       {/* Header with breadcrumb */}
       <div className="mb-6">
         <button
