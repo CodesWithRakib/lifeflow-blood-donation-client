@@ -1,6 +1,6 @@
 import React from "react";
 import useTitle from "../../hooks/useTitle";
-import { useQuery } from "@tanstack/react-query";
+import { QueryClient, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import useAxios from "../../hooks/useAxios";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
@@ -48,7 +48,7 @@ const MyDonations = () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ErrorMessage
           message={error.message}
-          onRetry={() => queryClient.invalidateQueries(["myDonations"])}
+          onRetry={() => QueryClient.invalidateQueries(["myDonations"])}
         />
       </div>
     );

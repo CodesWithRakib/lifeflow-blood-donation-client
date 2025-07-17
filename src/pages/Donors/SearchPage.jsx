@@ -1,54 +1,143 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Droplet, Search, Frown, Filter, MapPin } from "lucide-react";
+import { Droplet, Search, Frown, Filter, MapPin, Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  PDFDownloadLink,
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+} from "@react-pdf/renderer";
 import useAxios from "../../hooks/useAxios";
 import DonorCard from "./DonorCard";
 import upazilas from "../../constants/upazilas";
 import districts from "../../constants/districts";
 import useTitle from "../../hooks/useTitle";
 
+// Create styles for PDF
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+  },
+  header: {
+    fontSize: 24,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#e53e3e",
+  },
+  subheader: {
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#718096",
+  },
+  donorGrid: {
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 15,
+  },
+  donorCard: {
+    border: "1px solid #e2e8f0",
+    borderRadius: 5,
+    padding: 15,
+    width: "48%",
+    marginBottom: 15,
+  },
+  donorName: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  donorInfo: {
+    fontSize: 12,
+    marginBottom: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 10,
+    color: "#2d3748",
+  },
+});
+
+// PDF Document Component
+const DonorsPDF = ({ donors, filters }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.header}>Blood Donors List</Text>
+      <Text style={styles.subheader}>
+        {filters.district || "All Districts"}
+        {filters.upazila ? `, ${filters.upazila}` : ""}
+      </Text>
+      <Text style={styles.sectionTitle}>
+        Available Donors ({donors.length})
+      </Text>
+      <View style={styles.donorGrid}>
+        {donors.map((donor) => (
+          <View key={donor._id} style={styles.donorCard}>
+            <Text style={styles.donorName}>{donor.name}</Text>
+            <Text style={styles.donorInfo}>
+              Blood Group: {donor.bloodGroup}
+            </Text>
+            <Text style={styles.donorInfo}>District: {donor.district}</Text>
+            <Text style={styles.donorInfo}>Upazila: {donor.upazila}</Text>
+            <Text style={styles.donorInfo}>
+              Contact: {donor.contactNumber || "N/A"}
+            </Text>
+            <Text style={styles.donorInfo}>
+              Last Donation:{" "}
+              {new Date(
+                donor.lastDonationDate || Date.now()
+              ).toLocaleDateString()}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </Page>
+  </Document>
+);
+
 const SearchPage = () => {
   const axiosSecure = useAxios();
   const { register, handleSubmit, watch, setValue, reset } = useForm();
-  const [donors, setDonors] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
 
   useTitle("Search Donors | LifeFlow - Blood Donation");
-  // Blood group options
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-  // Filter upazilas based on selected district
   const filteredUpazilas = selectedDistrictId
     ? upazilas.filter((u) => u.district_id === selectedDistrictId)
     : [];
 
-  // Handle search submission
-  const onSubmit = async (data) => {
-    try {
-      setIsSearching(true);
+  const {
+    data: donors = [],
+    isFetching: isSearching,
+    refetch,
+  } = useQuery({
+    queryKey: ["donors", watch()],
+    queryFn: async () => {
+      const { bloodGroup, district, upazila } = watch();
+      if (!bloodGroup || !district) return [];
+
       const response = await axiosSecure.get("/donors/search", {
-        params: {
-          bloodGroup: data.bloodGroup,
-          district: data.district,
-          upazila: data.upazila,
-        },
+        params: { bloodGroup, district, upazila },
       });
-      setDonors(response.data || []);
-    } catch (error) {
-      console.error("Search failed:", error);
-      setDonors([]);
-    } finally {
-      setIsSearching(false);
-    }
+      return response.data || [];
+    },
+    enabled: false, // Disable automatic fetching
+    staleTime: 60000, // 1 minute cache
+  });
+
+  const onSubmit = async (data) => {
+    await refetch();
   };
 
-  // Reset search form
   const handleReset = () => {
     reset();
     setSelectedDistrictId(null);
-    setDonors([]);
   };
 
   return (
@@ -204,14 +293,28 @@ const SearchPage = () => {
           {donors.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  Available Donors ({donors.length})
-                </h2>
-                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {watch("district") || "All Districts"}
-                  {watch("upazila") ? `, ${watch("upazila")}` : ""}
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Available Donors ({donors.length})
+                  </h2>
+                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    {watch("district") || "All Districts"}
+                    {watch("upazila") ? `, ${watch("upazila")}` : ""}
+                  </div>
                 </div>
+                <PDFDownloadLink
+                  document={<DonorsPDF donors={donors} filters={watch()} />}
+                  fileName="blood-donors-list.pdf"
+                  className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors"
+                >
+                  {({ loading }) => (
+                    <>
+                      <Download className="h-4 w-4" />
+                      {loading ? "Preparing PDF..." : "Download as PDF"}
+                    </>
+                  )}
+                </PDFDownloadLink>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

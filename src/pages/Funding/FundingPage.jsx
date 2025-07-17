@@ -15,13 +15,17 @@ import GiveFundModal from "../../components/modal/GiveFundModal";
 import StatsCard from "../../components/common/StatsCard";
 import Pagination from "../../components/common/Pagination";
 import FundingTable from "./FundingTable";
+import useRole from "../../hooks/useRole";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const FundingPage = () => {
   const { user } = useAuth();
   const axiosSecure = useAxios();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
+  const { isAdmin, isVolunteer, isLoading } = useRole();
 
+  console.log(isAdmin, isVolunteer);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -100,6 +104,10 @@ const FundingPage = () => {
     totalPages: 1,
   };
 
+  if (fundsLoading || isLoading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <div className="max-w-screen-2xl mx-auto p-4">
       {/* Header */}
@@ -125,45 +133,46 @@ const FundingPage = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-        <StatsCard
-          title="Total Funds"
-          value={
-            fundsLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
-            ) : (
-              `$${stats.totalFunds?.toLocaleString()}`
-            )
-          }
-          icon={<DollarSign className="h-5 w-5 text-[#DC2626]" />}
-          trend={`+${stats.recentAmount || 0} recent`}
-        />
-        <StatsCard
-          title="Total Donors"
-          value={
-            fundsLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
-            ) : (
-              stats.totalDonors?.toLocaleString()
-            )
-          }
-          icon={<Users className="h-5 w-5 text-[#DC2626]" />}
-          trend="All time"
-        />
-        <StatsCard
-          title="Recent Donation"
-          value={
-            fundsLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
-            ) : (
-              `$${stats.recentAmount?.toLocaleString()}`
-            )
-          }
-          icon={<ArrowUpRight className="h-5 w-5 text-[#DC2626]" />}
-          trend="Latest contribution"
-        />
-      </div>
-
+      {(isAdmin || isVolunteer) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <StatsCard
+            title="Total Funds"
+            value={
+              fundsLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
+              ) : (
+                `$${stats.totalFunds?.toLocaleString()}`
+              )
+            }
+            icon={<DollarSign className="h-5 w-5 text-[#DC2626]" />}
+            trend={`+${stats.recentAmount || 0} recent`}
+          />
+          <StatsCard
+            title="Total Donors"
+            value={
+              fundsLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
+              ) : (
+                stats.totalDonors?.toLocaleString()
+              )
+            }
+            icon={<Users className="h-5 w-5 text-[#DC2626]" />}
+            trend="All time"
+          />
+          <StatsCard
+            title="Recent Donation"
+            value={
+              fundsLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-[#DC2626]" />
+              ) : (
+                `$${stats.recentAmount?.toLocaleString()}`
+              )
+            }
+            icon={<ArrowUpRight className="h-5 w-5 text-[#DC2626]" />}
+            trend="Latest contribution"
+          />
+        </div>
+      )}
       {/* Funding Table */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow  overflow-hidden">
         <FundingTable
