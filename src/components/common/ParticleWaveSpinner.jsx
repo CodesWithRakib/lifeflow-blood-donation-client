@@ -6,15 +6,16 @@ const ParticleWaveSpinner = ({ message = "Loading..." }) => {
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center gap-8"
+      className="fixed inset-0 flex flex-col items-center justify-center gap-8 bg-white bg-opacity-50 backdrop-blur-sm z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
     >
       <div className="relative w-32 h-32">
         {particles.map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-3 h-3 bg-amber-500 rounded-full"
+            className="absolute w-3 h-3 bg-red-500 rounded-full shadow-sm"
             initial={{
               x: 0,
               y: 0,
@@ -41,7 +42,7 @@ const ParticleWaveSpinner = ({ message = "Loading..." }) => {
           />
         ))}
         <motion.div
-          className="absolute w-8 h-8 bg-amber-600 rounded-full"
+          className="absolute w-8 h-8 bg-red-600 rounded-full shadow-md"
           style={{
             left: "50%",
             top: "50%",
@@ -60,10 +61,10 @@ const ParticleWaveSpinner = ({ message = "Loading..." }) => {
         />
       </div>
       <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="text-gray-600 dark:text-gray-300 text-sm font-medium"
+        className="text-gray-600 text-sm font-medium tracking-wide"
       >
         {message}
       </motion.p>
