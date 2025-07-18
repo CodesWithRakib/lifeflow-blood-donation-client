@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from "react-router";
+import { Outlet, NavLink, useNavigate, Link } from "react-router";
 import {
   LayoutDashboard,
   UserCircle,
@@ -139,10 +139,13 @@ const DashboardLayout = () => {
       <aside className="hidden md:flex flex-col bg-white dark:bg-gray-800 shadow-md h-screen w-full p-4 border-r border-gray-200 dark:border-gray-700 overflow-y-auto sticky top-0">
         {/* Logo & Theme Toggle */}
         <div className="mb-8 flex justify-between items-center px-2">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+          <Link
+            to="/"
+            className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2"
+          >
             <Droplets className="text-red-500" />
             LifeFlow
-          </h2>
+          </Link>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
@@ -205,7 +208,7 @@ const DashboardLayout = () => {
               Settings
             </NavLink>
             <NavLink
-              to="/help-center"
+              to="/dashboard/help-center"
               className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <HelpCircle className="w-5 h-5" />
@@ -322,7 +325,7 @@ const DashboardLayout = () => {
                     Settings
                   </NavLink>
                   <NavLink
-                    to="/help-center"
+                    to="/dashboard/help-center"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >

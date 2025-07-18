@@ -37,6 +37,10 @@ import EditBlog from "../pages/Dashboard/Admin/EditBlog";
 import Error from "../pages/error/Error";
 import PrivateRoute from "../middleware/PrivateRoute";
 import MyDonations from "../pages/Requests/MyDonations";
+import HealthTips from "../pages/Requests/HealthTips";
+import Analytics from "../pages/Dashboard/Admin/Analytics";
+import Settings from "../pages/Dashboard/Settings";
+import HelpCenter from "../pages/Dashboard/HelpCenter";
 
 // Routing Configuration
 const router = createBrowserRouter([
@@ -109,6 +113,8 @@ const router = createBrowserRouter([
       { path: "create-donation-request", element: <CreateDonationRequest /> },
       { path: "my-donation-requests", element: <MyDonationRequests /> },
       { path: "my-donations", element: <MyDonations /> },
+      { path: "donation-details/:id", element: <DonationRequestDetails /> },
+      { path: "health-tips", element: <HealthTips /> },
       {
         path: "donation-request/:id",
         element: (
@@ -122,6 +128,7 @@ const router = createBrowserRouter([
       // ========= Admin Routes =========
       { path: "all-users", element: <AllUsers /> },
       { path: "all-blood-donation-request", element: <AllDonationRequests /> },
+      { path: "analytics", element: <Analytics /> },
 
       // --- Content Management (Blogs)
       { path: "content-management", element: <ContentManagement /> },
@@ -138,6 +145,8 @@ const router = createBrowserRouter([
 
       // --- Funding (shared access in dashboard)
       { path: "funding", element: <Funding /> },
+      { path: "settings", element: <Settings /> },
+      { path: "help-center", element: <HelpCenter /> },
     ],
   },
 ]);
