@@ -41,6 +41,7 @@ import HealthTips from "../pages/Requests/HealthTips";
 import Analytics from "../pages/Dashboard/Admin/Analytics";
 import Settings from "../pages/Dashboard/Settings";
 import HelpCenter from "../pages/Dashboard/HelpCenter";
+import AdminRoute from "../middleware/AdminRoute";
 
 // Routing Configuration
 const router = createBrowserRouter([
@@ -67,7 +68,15 @@ const router = createBrowserRouter([
       },
 
       // --- Funding (shared access)
-      { path: "funding", element: <Funding /> },
+      {
+        path: "funding",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <Funding />{" "}
+          </PrivateRoute>
+        ),
+      },
 
       // --- Search Donors
       { path: "search-donors", element: <SearchPage /> },
@@ -107,13 +116,52 @@ const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
 
       // --- Profile Page (common)
-      { path: "profile", element: <Profile /> },
+      {
+        path: "profile",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <Profile />{" "}
+          </PrivateRoute>
+        ),
+      },
 
       // ========= Donor Routes =========
-      { path: "create-donation-request", element: <CreateDonationRequest /> },
-      { path: "my-donation-requests", element: <MyDonationRequests /> },
-      { path: "my-donations", element: <MyDonations /> },
-      { path: "donation-details/:id", element: <DonationRequestDetails /> },
+      {
+        path: "create-donation-request",
+        element: (
+          <PrivateRoute>
+            <CreateDonationRequest />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-donation-requests",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <MyDonationRequests />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "my-donations",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <MyDonations />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "donation-details/:id",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <DonationRequestDetails />
+          </PrivateRoute>
+        ),
+      },
       { path: "health-tips", element: <HealthTips /> },
       {
         path: "donation-request/:id",
@@ -123,29 +171,99 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
-      { path: "edit-donation/:id", element: <EditDonationRequest /> },
-
-      // ========= Admin Routes =========
-      { path: "all-users", element: <AllUsers /> },
-      { path: "all-blood-donation-request", element: <AllDonationRequests /> },
-      { path: "analytics", element: <Analytics /> },
-
-      // --- Content Management (Blogs)
-      { path: "content-management", element: <ContentManagement /> },
-      { path: "content-management/add-blog", element: <AddBlog /> },
-      { path: "content-management/edit-blog/:id", element: <EditBlog /> },
       {
-        path: "content-management/blog-preview/:id",
-        element: <BlogPreview />,
+        path: "edit-donation/:id",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <EditDonationRequest />{" "}
+          </PrivateRoute>
+        ),
       },
 
-      // ========= Volunteer Routes =========
-      // Reuse AllDonationRequests and ContentManagement
-      // Render UI conditionally in layout/sidebar based on user role
+      // ========= Admin Routes =========
+      {
+        path: "all-users",
+        element: (
+          <AdminRoute>
+            <AllUsers />
+          </AdminRoute>
+        ),
+      },
+      {
+        path: "all-blood-donation-request",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <AllDonationRequests />{" "}
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "analytics",
+        element: (
+          <AdminRoute>
+            {" "}
+            <Analytics />{" "}
+          </AdminRoute>
+        ),
+      },
 
+      // --- Content Management (Blogs)
+      {
+        path: "content-management",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <ContentManagement />{" "}
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "content-management/add-blog",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <AddBlog />{" "}
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "content-management/edit-blog/:id",
+        element: (
+          <PrivateRoute>
+            <EditBlog />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "content-management/blog-preview/:id",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <BlogPreview />
+          </PrivateRoute>
+        ),
+      },
       // --- Funding (shared access in dashboard)
-      { path: "funding", element: <Funding /> },
-      { path: "settings", element: <Settings /> },
+      {
+        path: "funding",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <Funding />{" "}
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "settings",
+        element: (
+          <PrivateRoute>
+            {" "}
+            <Settings />{" "}
+          </PrivateRoute>
+        ),
+      },
       { path: "help-center", element: <HelpCenter /> },
     ],
   },
