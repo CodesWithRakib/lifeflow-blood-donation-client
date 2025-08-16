@@ -42,6 +42,7 @@ import Analytics from "../pages/Dashboard/Admin/Analytics";
 import Settings from "../pages/Dashboard/Settings";
 import HelpCenter from "../pages/Dashboard/HelpCenter";
 import AdminRoute from "../middleware/AdminRoute";
+import EmergencyRequest from "../pages/Requests/EmergencyRequest";
 
 // Routing Configuration
 const router = createBrowserRouter([
@@ -94,6 +95,14 @@ const router = createBrowserRouter([
         element: (
           <PrivateRoute>
             <DonationRequestDetails />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: "emergency-request",
+        element: (
+          <PrivateRoute>
+            <EmergencyRequest />
           </PrivateRoute>
         ),
       },
