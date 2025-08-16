@@ -36,7 +36,6 @@ const EditDonationRequest = () => {
         const { data } = await axiosSecure.get("/donations");
         const requestRes = data?.data?.find((req) => req._id === id);
 
-        console.log(requestRes);
         // Set form values from the fetched request using CreateDonationRequest field names
         reset({
           recipientName: requestRes.recipientName,

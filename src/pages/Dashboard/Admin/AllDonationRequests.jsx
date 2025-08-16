@@ -118,7 +118,7 @@ const AllDonationRequests = () => {
       ),
       cell: ({ row }) => (
         <div className="text-gray-500 dark:text-gray-400">
-          {row.original.district}, {row.original.upazila}
+          {row.original.recipientDistrict}, {row.original.recipientUpazila}
         </div>
       ),
     },

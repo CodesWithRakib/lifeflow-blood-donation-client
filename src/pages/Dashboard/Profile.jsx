@@ -137,7 +137,7 @@ const Profile = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
         <LoadingSpinner size="lg" message="Loading your profile..." />
       </div>
     );
@@ -145,21 +145,23 @@ const Profile = () => {
 
   return (
     <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-red-50 to-amber-50 px-6 py-4 border-b border-gray-200">
+        <div className="bg-gradient-to-r from-red-50 to-amber-50 dark:from-gray-700 dark:to-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <User className="h-6 w-6 text-red-600" />
+              <div className="p-2 bg-red-100 dark:bg-gray-600 rounded-lg">
+                <User className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800">My Profile</h2>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                My Profile
+              </h2>
             </div>
 
             {!editMode ? (
               <button
                 onClick={() => setEditMode(true)}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                 aria-label="Edit profile"
               >
                 <Edit className="h-4 w-4" />
@@ -169,7 +171,7 @@ const Profile = () => {
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <button
                   onClick={handleCancel}
-                  className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                  className="flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                   aria-label="Cancel editing"
                 >
                   <X className="h-4 w-4" />
@@ -178,7 +180,7 @@ const Profile = () => {
                 <button
                   onClick={handleSave}
                   disabled={isSaving || isUploading}
-                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white px-4 py-2 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
                   aria-label="Save changes"
                 >
                   {isSaving ? (
@@ -201,7 +203,7 @@ const Profile = () => {
             {/* Avatar Section */}
             <div className="flex flex-col items-center">
               <div className="relative group mb-4">
-                <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <div className="relative h-32 w-32 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-lg">
                   <img
                     src={
                       formData.avatar ||
@@ -215,7 +217,7 @@ const Profile = () => {
                   {editMode && (
                     <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <label
-                        className={`cursor-pointer p-2 bg-white bg-opacity-80 rounded-full ${
+                        className={`cursor-pointer p-2 bg-white bg-opacity-80 dark:bg-gray-600 dark:bg-opacity-80 rounded-full ${
                           isUploading ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                         aria-label="Change profile picture"
@@ -235,14 +237,14 @@ const Profile = () => {
                         {isUploading ? (
                           <LoadingSpinner small />
                         ) : (
-                          <Edit className="h-5 w-5 text-red-600" />
+                          <Edit className="h-5 w-5 text-red-600 dark:text-white" />
                         )}
                       </label>
                     </div>
                   )}
                 </div>
                 {isUploading && (
-                  <p className="text-center text-sm text-gray-500 mt-2">
+                  <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">
                     Uploading image...
                   </p>
                 )}
@@ -255,7 +257,7 @@ const Profile = () => {
               <div className="space-y-1">
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Full Name
                 </label>
@@ -268,8 +270,8 @@ const Profile = () => {
                   disabled={!editMode}
                   className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-all ${
                     editMode
-                      ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
-                      : "bg-gray-50 border-gray-200 cursor-not-allowed text-gray-600"
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-300"
                   }`}
                 />
               </div>
@@ -278,7 +280,7 @@ const Profile = () => {
               <div className="space-y-1">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Email Address
                 </label>
@@ -288,7 +290,7 @@ const Profile = () => {
                   name="email"
                   value={formData.email}
                   disabled
-                  className="w-full px-4 py-2 rounded-lg border bg-gray-50 border-gray-200 cursor-not-allowed text-gray-600 focus:outline-none"
+                  className="w-full px-4 py-2 rounded-lg border bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-300 focus:outline-none"
                 />
               </div>
 
@@ -296,7 +298,7 @@ const Profile = () => {
               <div className="space-y-1">
                 <label
                   htmlFor="district"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   District
                 </label>
@@ -309,8 +311,8 @@ const Profile = () => {
                     disabled={!editMode}
                     className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-all appearance-none ${
                       editMode
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
-                        : "bg-gray-50 border-gray-200 cursor-not-allowed text-gray-600"
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-300"
                     }`}
                   >
                     <option value="">Select District</option>
@@ -330,7 +332,7 @@ const Profile = () => {
               <div className="space-y-1">
                 <label
                   htmlFor="upazila"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Upazila
                 </label>
@@ -343,8 +345,8 @@ const Profile = () => {
                     disabled={!editMode || !formData.district}
                     className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-all appearance-none ${
                       editMode
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
-                        : "bg-gray-50 border-gray-200 cursor-not-allowed text-gray-600"
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-300"
                     } ${
                       !formData.district ? "opacity-50 cursor-not-allowed" : ""
                     }`}
@@ -366,7 +368,7 @@ const Profile = () => {
               <div className="md:col-span-2 space-y-1">
                 <label
                   htmlFor="bloodGroup"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   Blood Group
                 </label>
@@ -379,8 +381,8 @@ const Profile = () => {
                     disabled={!editMode}
                     className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-all appearance-none ${
                       editMode
-                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white text-gray-900"
-                        : "bg-gray-50 border-gray-200 cursor-not-allowed text-gray-600"
+                        ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        : "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 cursor-not-allowed text-gray-600 dark:text-gray-300"
                     }`}
                   >
                     <option value="">Select Blood Group</option>

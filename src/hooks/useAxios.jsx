@@ -12,9 +12,9 @@ const axiosInstance = axios.create({
 
 // Request interceptor to add headers
 axiosInstance.interceptors.request.use((config) => {
-  console.log(
-    `[AXIOS] Sending ${config.method?.toUpperCase()} to ${config.url}`
-  );
+  // console.log(
+  //   `[AXIOS] Sending ${config.method?.toUpperCase()} to ${config.url}`
+  // );
   return config;
 });
 
@@ -25,7 +25,7 @@ axiosInstance.interceptors.response.use(
     console.error(`[AXIOS Error]`, error);
     if (error.response?.status === 401 || error.response?.status === 403) {
       console.warn("Authentication error - redirecting to login");
-      // window.location.href = "/login"; // Uncomment if needed
+      window.location.href = "/login"; // Uncomment if needed
     }
     return Promise.reject(error);
   }

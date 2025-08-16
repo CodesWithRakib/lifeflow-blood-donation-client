@@ -25,7 +25,6 @@ const FundingPage = () => {
   const [showModal, setShowModal] = useState(false);
   const { isAdmin, isVolunteer, isLoading } = useRole();
 
-  console.log(isAdmin, isVolunteer);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,

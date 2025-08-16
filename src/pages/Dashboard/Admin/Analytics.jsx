@@ -29,21 +29,21 @@ import {
 } from "lucide-react";
 import useAxios from "../../../hooks/useAxios";
 import useAuth from "../../../hooks/useAuth";
-import { useUser } from "../../../hooks/useUser";
 import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ErrorMessage from "../../../components/common/ErrorMessage";
+import useTitle from "../../../hooks/useTitle";
 
 const Analytics = () => {
   const navigate = useNavigate();
   const { user, userRole } = useAuth();
-  const { data: userData } = useUser();
   const [timeRange, setTimeRange] = useState("weekly");
   const [reportLoading, setReportLoading] = useState(false);
   const axiosSecure = useAxios();
 
-  console.log(userRole);
+  useTitle("Analytics | LifeFlow - Blood Donation");
+
   // Fetch stats with auto-refresh every 5 minutes
   const {
     data: stats,
