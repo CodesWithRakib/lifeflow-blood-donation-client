@@ -89,7 +89,7 @@ const MyDonationRequests = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       const toastId = toast.loading("Updating status...");
-      await axiosSecure.patch(`/donations/status/${id}`, {
+      await axiosSecure.patch(`/requests/status/${id}`, {
         status: newStatus,
       });
       toast.success(`Request marked as ${newStatus}`, { id: toastId });
@@ -121,7 +121,7 @@ const MyDonationRequests = () => {
     if (result.isConfirmed) {
       try {
         const toastId = toast.loading("Deleting request...");
-        await axiosSecure.delete(`/donations/${id}`);
+        await axiosSecure.delete(`/requests/${id}`);
         toast.success("Request deleted successfully", { id: toastId });
         refetch();
       } catch (error) {

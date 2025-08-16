@@ -93,7 +93,7 @@ const EditDonationRequest = () => {
         updatedAt: new Date().toISOString(),
       };
 
-      const response = await axiosSecure.patch(`/donations/${id}`, fullData);
+      const response = await axiosSecure.patch(`/requests/${id}`, fullData);
       if (response.status === 200) {
         toast.success("Request updated successfully!");
         navigate("/dashboard/my-donation-requests");

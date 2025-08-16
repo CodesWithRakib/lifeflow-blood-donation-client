@@ -36,7 +36,7 @@ const AllDonationRequest = () => {
 
   const mutation = useMutation({
     mutationFn: async ({ id, status }) => {
-      return axios.patch(`/donations/status/${id}`, { status });
+      return axios.patch(`/requests/status/${id}`, { status });
     },
     onSuccess: () => {
       toast.success("Status updated");
@@ -47,7 +47,7 @@ const AllDonationRequest = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => {
-      return axios.delete(`/donations/${id}`);
+      return axios.delete(`/requests/${id}`);
     },
     onSuccess: () => {
       toast.success("Deleted successfully");

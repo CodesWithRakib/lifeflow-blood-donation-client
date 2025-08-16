@@ -66,7 +66,6 @@ const BloodTypeBadge = React.memo(({ bloodGroup }) => {
         return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400";
     }
   };
-
   return (
     <span
       className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-bold ${getBadgeStyle()}`}
@@ -90,7 +89,6 @@ const StatusBadge = React.memo(({ status }) => {
         return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
     }
   };
-
   return (
     <span
       className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle()}`}
@@ -115,7 +113,7 @@ const DonationRequestDetails = () => {
   } = useQuery({
     queryKey: ["donation-details", id],
     queryFn: async () => {
-      const { data } = await axiosSecure.get(`/donations/${id}`);
+      const { data } = await axiosSecure.get(`/requests/${id}`);
       return data?.data;
     },
     retry: 2,
@@ -124,7 +122,7 @@ const DonationRequestDetails = () => {
   const mutation = useMutation({
     mutationFn: async (donationInfo) => {
       const res = await axiosSecure.patch(
-        `/donations/${id}/donate`,
+        `/requests/${id}/donate`,
         donationInfo
       );
       return res.data;
@@ -150,19 +148,15 @@ const DonationRequestDetails = () => {
     if (!user) {
       return toast.error("Please login to donate");
     }
-
     if (!request) {
       return toast.error("Request data not loaded");
     }
-
     if (request.status !== "pending") {
       return toast.error("This request is no longer available for donation.");
     }
-
     if (request.requesterEmail === user?.email) {
       return toast.error("You cannot donate to your own request.");
     }
-
     Swal.fire({
       title: "Confirm Your Donation Commitment",
       html: `
@@ -203,7 +197,7 @@ const DonationRequestDetails = () => {
               }
               <div>
                 <p class="font-semibold text-gray-900 dark:text-white">${
-                  request.recipientName
+                  request.patientName || request.recipientName
                 }</p>
                 <p class="text-sm text-gray-600 dark:text-gray-300">${
                   request.hospitalName
@@ -360,7 +354,7 @@ const DonationRequestDetails = () => {
         <div className="p-6 sm:p-8">
           <div className="mb-8">
             <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-              Recipient Information
+              Patient Information
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
               Please review all details carefully before donating.
@@ -370,8 +364,8 @@ const DonationRequestDetails = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <DetailCard
               icon={<FaUser className="text-red-500" />}
-              title="Recipient"
-              value={request.recipientName}
+              title="Patient Name"
+              value={request.patientName || request.recipientName || "N/A"}
               className="bg-white dark:bg-gray-700"
             />
             <DetailCard
@@ -383,13 +377,15 @@ const DonationRequestDetails = () => {
             <DetailCard
               icon={<FaHospital className="text-amber-500" />}
               title="Hospital"
-              value={request.hospitalName}
+              value={request.hospitalName || "N/A"}
               className="bg-white dark:bg-gray-700"
             />
             <DetailCard
               icon={<FaMapMarkerAlt className="text-blue-500" />}
               title="Location"
-              value={`${request.recipientUpazila}, ${request.recipientDistrict}`}
+              value={`${request.recipientUpazila || "N/A"}, ${
+                request.recipientDistrict || "N/A"
+              }`}
               className="bg-white dark:bg-gray-700"
             />
             <DetailCard
@@ -406,20 +402,29 @@ const DonationRequestDetails = () => {
             />
           </div>
 
-          {request.fullAddress && (
+          {request.hospitalAddress && (
             <DetailCard
               icon={<FaMapMarkerAlt className="text-blue-500" />}
-              title="Full Address"
-              value={request.fullAddress}
+              title="Hospital Address"
+              value={request.hospitalAddress}
               className="mt-6 bg-white dark:bg-gray-700"
             />
           )}
 
-          {request.contactNumber && (
+          {request.contactPhone && (
             <DetailCard
               icon={<FaPhone className="text-green-500" />}
               title="Contact Number"
-              value={request.contactNumber}
+              value={request.contactPhone}
+              className="mt-6 bg-white dark:bg-gray-700"
+            />
+          )}
+
+          {request.reason && (
+            <DetailCard
+              icon={<FaInfoCircle className="text-amber-500" />}
+              title="Reason for Emergency"
+              value={request.reason}
               className="mt-6 bg-white dark:bg-gray-700"
             />
           )}

@@ -49,7 +49,7 @@ const DonorHome = () => {
   const handleStatusUpdate = async (id, newStatus) => {
     try {
       const toastId = toast.loading("Updating status...");
-      const { data } = await axiosSecure.patch(`/donations/status/${id}`, {
+      const { data } = await axiosSecure.patch(`/requests/status/${id}`, {
         status: newStatus,
       });
 
@@ -87,7 +87,7 @@ const DonorHome = () => {
       if (result.isConfirmed) {
         try {
           const toastId = toast.loading("Deleting request...");
-          const { data } = await axiosSecure.delete(`/donations/${id}`);
+          const { data } = await axiosSecure.delete(`/requests/${id}`);
 
           if (!data.success) {
             throw new Error(
