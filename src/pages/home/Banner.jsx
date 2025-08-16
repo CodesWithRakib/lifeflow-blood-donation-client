@@ -1,5 +1,15 @@
+import React, { useMemo } from "react";
 import { Link } from "react-router";
-import { Droplet, HeartHandshake, Search } from "lucide-react";
+import {
+  Droplet,
+  HeartHandshake,
+  Search,
+  Users,
+  Clock,
+  Activity,
+  Star,
+  ArrowRight,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useInView } from "react-intersection-observer";
 
@@ -40,23 +50,107 @@ const blobVariants = {
   },
 };
 
+// Memoized Blood Type Component
+const BloodType = React.memo(({ type, urgent }) => (
+  <motion.div
+    className={`flex flex-col items-center justify-center p-3 rounded-lg border-2 ${
+      urgent ? "border-red-300 bg-red-900/30" : "border-white/20 bg-white/10"
+    }`}
+    whileHover={{ y: -5, scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    <span
+      className={`text-2xl font-bold ${urgent ? "text-red-300" : "text-white"}`}
+    >
+      {type}
+    </span>
+    {urgent && <span className="text-xs text-red-300 mt-1">Urgent</span>}
+  </motion.div>
+));
+
+// Memoized Testimonial Component
+const Testimonial = React.memo(() => (
+  <motion.div
+    className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/20 mt-6"
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.8, duration: 0.5 }}
+    viewport={{ once: true }}
+  >
+    <div className="flex items-start gap-3">
+      <Star className="h-5 w-5 text-amber-300 mt-0.5" />
+      <div>
+        <p className="text-sm text-red-100 italic">
+          "Donating blood was one of the most rewarding experiences. Knowing I
+          helped save three lives is incredible!"
+        </p>
+        <p className="text-xs text-amber-200 mt-2">— Sarah T., Regular Donor</p>
+      </div>
+    </div>
+  </motion.div>
+));
+
+// Memoized Stats Component
+const Stats = React.memo(() => (
+  <motion.div
+    className="grid grid-cols-3 gap-4 mt-6"
+    initial={{ opacity: 0 }}
+    whileInView={{ opacity: 1 }}
+    transition={{ delay: 0.7, duration: 0.5 }}
+    viewport={{ once: true }}
+  >
+    <div className="text-center">
+      <div className="text-2xl font-bold text-white">36K+</div>
+      <div className="text-xs text-red-200">Donors</div>
+    </div>
+    <div className="text-center">
+      <div className="text-2xl font-bold text-white">24K+</div>
+      <div className="text-xs text-red-200">Lives Saved</div>
+    </div>
+    <div className="text-center">
+      <div className="text-2xl font-bold text-white">98%</div>
+      <div className="text-xs text-red-200">Satisfaction</div>
+    </div>
+  </motion.div>
+));
+
 const Banner = () => {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1,
   });
 
-  const benefits = [
-    "1 donation can save up to 3 lives",
-    "Only takes about 10 minutes",
-    "Helps maintain your own health",
-    "Free health checkup included",
-  ];
+  // Memoize benefits array to prevent unnecessary re-renders
+  const benefits = useMemo(
+    () => [
+      "1 donation can save up to 3 lives",
+      "Only takes about 10 minutes",
+      "Helps maintain your own health",
+      "Free health checkup included",
+    ],
+    []
+  );
+
+  // Memoize blood types data
+  const bloodTypes = useMemo(
+    () => [
+      { type: "O+", urgent: false },
+      { type: "O-", urgent: true },
+      { type: "A+", urgent: false },
+      { type: "A-", urgent: true },
+      { type: "B+", urgent: false },
+      { type: "B-", urgent: false },
+      { type: "AB+", urgent: false },
+      { type: "AB-", urgent: true },
+    ],
+    []
+  );
 
   return (
     <section
       ref={ref}
       className="relative bg-gradient-to-br from-red-600 to-red-700 dark:from-red-800 dark:to-red-900 text-white overflow-hidden"
+      aria-label="Blood donation banner"
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -73,7 +167,19 @@ const Banner = () => {
           {/* Content */}
           <div className="text-center lg:text-left">
             <motion.div variants={itemVariants}>
-              <Droplet className="h-12 w-12 mx-auto lg:mx-0 mb-4 text-red-200" />
+              <motion.div
+                animate={{
+                  rotate: [0, 10, 0, -10, 0],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                }}
+              >
+                <Droplet className="h-12 w-12 mx-auto lg:mx-0 mb-4 text-red-200" />
+              </motion.div>
             </motion.div>
 
             <motion.h1
@@ -96,21 +202,37 @@ const Banner = () => {
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               variants={itemVariants}
             >
-              <Link
-                to="/register"
-                className="bg-white hover:bg-gray-50 text-red-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <HeartHandshake className="h-5 w-5" />
-                Join as a Donor
-              </Link>
-              <Link
-                to="/search-donors"
-                className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                <Link
+                  to="/register"
+                  className="bg-white hover:bg-gray-50 text-red-700 font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                  aria-label="Join as a donor"
+                >
+                  <HeartHandshake className="h-5 w-5" />
+                  Join as a Donor
+                </Link>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
-                <Search className="h-5 w-5" />
-                Search Donors
-              </Link>
+                <Link
+                  to="/search-donors"
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:-translate-y-0.5 active:scale-95"
+                  aria-label="Search for donors"
+                >
+                  <Search className="h-5 w-5" />
+                  Search Donors
+                </Link>
+              </motion.div>
             </motion.div>
+
+            {/* Stats */}
+            <Stats />
           </div>
 
           {/* Illustration - Visible on lg screens and up */}
@@ -165,6 +287,25 @@ const Banner = () => {
                       </motion.li>
                     ))}
                   </ul>
+
+                  {/* Blood types section */}
+                  <div className="mt-6 w-full">
+                    <h4 className="text-lg font-semibold mb-3">
+                      Blood Types Needed
+                    </h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {bloodTypes.map((bloodType, index) => (
+                        <BloodType
+                          key={index}
+                          type={bloodType.type}
+                          urgent={bloodType.urgent}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Testimonial */}
+                  <Testimonial />
                 </div>
               </motion.div>
             </div>
@@ -197,6 +338,19 @@ const Banner = () => {
                 </motion.li>
               ))}
             </ul>
+
+            {/* Blood types section for mobile */}
+            <div className="mt-4 w-full">
+              <h4 className="text-md font-semibold mb-2">Urgently Needed</h4>
+              <div className="flex justify-center gap-2">
+                <BloodType type="O-" urgent={true} />
+                <BloodType type="A-" urgent={true} />
+                <BloodType type="AB-" urgent={true} />
+              </div>
+            </div>
+
+            {/* Testimonial for mobile */}
+            <Testimonial />
           </div>
         </motion.div>
       </div>
@@ -207,6 +361,7 @@ const Banner = () => {
           viewBox="0 0 1200 120"
           preserveAspectRatio="none"
           className="w-full h-16 md:h-24"
+          aria-hidden="true"
         >
           <path
             d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
