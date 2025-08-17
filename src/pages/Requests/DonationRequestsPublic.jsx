@@ -1,7 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import useAxios from "../../hooks/useAxios";
+import useAxios from "../../hooks/useAxios"; // Use your custom hook
+import { motion } from "motion/react";
+import { format, differenceInDays } from "date-fns";
 import {
   FaHeartbeat,
   FaCalendarAlt,
@@ -13,38 +15,29 @@ import {
   FaExclamationTriangle,
   FaFilter,
 } from "react-icons/fa";
-import { motion } from "motion/react";
-import { format, differenceInDays } from "date-fns";
 import RequestCardSkeleton from "./RequestCardSkeleton";
-import useTitle from "../../hooks/useTitle";
 
 // Memoized Donation Request Card Component
-const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
+const DonationRequestCard = React.memo(({ request, index, urgencyLevel }) => {
   // Format the date and time
-  const formattedDate = useMemo(
-    () => format(new Date(req.date), "MMM dd, yyyy"),
-    [req.date]
-  );
+  const formattedDate = format(new Date(request.date), "MMM dd, yyyy");
 
   // Calculate days until donation
-  const daysUntil = useMemo(
-    () => differenceInDays(new Date(req.date), new Date()),
-    [req.date]
-  );
+  const daysUntil = differenceInDays(new Date(request.date), new Date());
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300 group"
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden border border-gray-100 dark:border-gray-700 hover:shadow-lg transition-all duration-300"
     >
       {/* Urgency indicator */}
       <div
         className={`h-1.5 w-full ${
-          urgencyLevel === "high"
+          daysUntil <= 1
             ? "bg-red-500"
-            : urgencyLevel === "medium"
+            : daysUntil <= 3
             ? "bg-amber-500"
             : "bg-green-500"
         }`}
@@ -59,10 +52,10 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
             </div>
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-1">
-                {req.recipientName}
+                {request.recipientName || request.patientName}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Patient ID: {req.patientId || "N/A"}
+                Patient ID: {request.patientId || "N/A"}
               </p>
             </div>
           </div>
@@ -70,18 +63,18 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
           {/* Blood type badge */}
           <div
             className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold ${
-              req.bloodGroup === "O-"
+              request.bloodGroup === "O-"
                 ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                : req.bloodGroup === "O+"
+                : request.bloodGroup === "O+"
                 ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
-                : req.bloodGroup.includes("A")
+                : request.bloodGroup.includes("A")
                 ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                : req.bloodGroup.includes("B")
+                : request.bloodGroup.includes("B")
                 ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
                 : "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400"
             }`}
           >
-            {req.bloodGroup}
+            {request.bloodGroup}
           </div>
         </div>
 
@@ -89,22 +82,23 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
         <div className="flex items-center mb-4">
           <div
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              urgencyLevel === "high"
+              daysUntil <= 1
                 ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-                : urgencyLevel === "medium"
-                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                : daysUntil <= 3
+                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-red-300"
                 : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
             }`}
           >
-            {urgencyLevel === "high" && (
+            {daysUntil <= 1 && (
               <FaExclamationTriangle className="mr-1 h-3 w-3" />
             )}
-            {urgencyLevel === "high"
+            {daysUntil <= 1
               ? "Urgent"
-              : urgencyLevel === "medium"
+              : daysUntil <= 3
               ? "Medium Priority"
               : "Scheduled"}
           </div>
+
           {daysUntil >= 0 && (
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
               {daysUntil === 0
@@ -121,38 +115,43 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
             <FaMapMarkerAlt className="flex-shrink-0 mr-2 text-gray-400 dark:text-gray-500" />
             <span>
-              {req.recipientUpazila}, {req.recipientDistrict}
+              {request.recipientUpazila || request.upazila},{" "}
+              {request.recipientDistrict || request.district}
             </span>
           </div>
+
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
             <FaHospital className="flex-shrink-0 mr-2 text-gray-400 dark:text-gray-500" />
             <span className="truncate">
-              {req.hospitalName ||
-                req.recipientHospital ||
+              {request.hospitalName ||
+                request.recipientHospital ||
                 "Hospital name not provided"}
             </span>
           </div>
+
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
             <FaCalendarAlt className="flex-shrink-0 mr-2 text-gray-400 dark:text-gray-500" />
             <span>{formattedDate}</span>
           </div>
+
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
             <FaClock className="flex-shrink-0 mr-2 text-gray-400 dark:text-gray-500" />
-            <span>{req.time}</span>
+            <span>{request.time}</span>
           </div>
-          {req.contactNumber && (
+
+          {request.contactNumber && (
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
               <FaPhone className="flex-shrink-0 mr-2 text-gray-400 dark:text-gray-500" />
-              <span>{req.contactNumber}</span>
+              <span>{request.contactNumber}</span>
             </div>
           )}
         </div>
 
         {/* Additional info */}
-        {req.reason && (
+        {request.reason && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              <span className="font-medium">Reason:</span> {req.reason}
+              <span className="font-medium">Reason:</span> {request.reason}
             </p>
           </div>
         )}
@@ -160,7 +159,7 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
         {/* Action button */}
         <div className="mt-6 flex justify-end">
           <Link
-            to={`/donation-request/${req._id}`}
+            to={`/donation-request/${request._id}`}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-gray-800 transition-all duration-300 group-hover:shadow-md"
           >
             View Details
@@ -172,13 +171,13 @@ const DonationRequestCard = React.memo(({ req, index, urgencyLevel }) => {
 });
 
 const DonationRequestsPublic = () => {
+  const [bloodGroupFilter, setBloodGroupFilter] = useState("all");
+  const [urgencyFilter, setUrgencyFilter] = useState("all");
+
+  // Use your custom axios hook
   const axiosSecure = useAxios();
-  useTitle("Donation Requests | LifeFlow - Blood Donation");
 
-  // State for filters
-  const [bloodGroupFilter, setBloodGroupFilter] = React.useState("all");
-  const [urgencyFilter, setUrgencyFilter] = React.useState("all");
-
+  // Fetch data using react-query
   const {
     data: requests = [],
     isLoading,
@@ -192,7 +191,7 @@ const DonationRequestsPublic = () => {
   });
 
   // Filter and sort requests
-  const filteredRequests = useMemo(() => {
+  const filteredRequests = React.useMemo(() => {
     let result = [...requests];
 
     // Apply blood group filter
@@ -214,31 +213,25 @@ const DonationRequestsPublic = () => {
     result.sort((a, b) => {
       const daysA = differenceInDays(new Date(a.date), new Date());
       const daysB = differenceInDays(new Date(b.date), new Date());
-
       const urgencyA = daysA <= 1 ? "high" : daysA <= 3 ? "medium" : "low";
       const urgencyB = daysB <= 1 ? "high" : daysB <= 3 ? "medium" : "low";
-
       const urgencyOrder = { high: 0, medium: 1, low: 2 };
 
       if (urgencyOrder[urgencyA] !== urgencyOrder[urgencyB]) {
         return urgencyOrder[urgencyA] - urgencyOrder[urgencyB];
       }
-
       return daysA - daysB;
     });
 
     return result;
   }, [requests, bloodGroupFilter, urgencyFilter]);
 
-  // Blood group options for filter
-  const bloodGroups = ["all", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-
   // Error state
   if (isError) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/50 rounded-xl p-8 text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
             <FaExclamationTriangle className="h-8 w-8 text-red-500" />
           </div>
           <h3 className="text-xl font-medium text-red-800 dark:text-red-200 mb-2">
@@ -270,7 +263,6 @@ const DonationRequestsPublic = () => {
           <FaHeartbeat className="w-4 h-4 mr-2" />
           Donation Requests
         </motion.div>
-
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -279,7 +271,6 @@ const DonationRequestsPublic = () => {
         >
           Urgent Blood Donation Requests
         </motion.h2>
-
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -302,7 +293,6 @@ const DonationRequestsPublic = () => {
             <FaFilter className="mr-2" />
             Filters:
           </div>
-
           <div className="flex flex-wrap gap-4">
             {/* Blood Group Filter */}
             <div className="relative">
@@ -312,13 +302,13 @@ const DonationRequestsPublic = () => {
                 className="appearance-none block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-amber-500 focus:border-amber-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="all">All Blood Types</option>
-                {bloodGroups
-                  .filter((bg) => bg !== "all")
-                  .map((group) => (
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                  (group) => (
                     <option key={group} value={group}>
                       {group}
                     </option>
-                  ))}
+                  )
+                )}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
                 <svg
@@ -386,55 +376,40 @@ const DonationRequestsPublic = () => {
           animate={{ opacity: 1 }}
           className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 text-center border border-gray-200 dark:border-gray-700"
         >
-          <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20 mb-6">
-            <FaHeartbeat className="h-12 w-12 text-amber-500 dark:text-amber-400" />
+          <div className="mx-auto h-24 w-24 flex items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20">
+            <FaHeartbeat className="h-12 w-12 text-amber-500" />
           </div>
           <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
             No Active Requests
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            {requests.length === 0
-              ? "Currently there are no pending blood donation requests."
-              : "No requests match your current filters. Try adjusting your filter criteria."}
+            Currently there are no pending blood donation requests.
           </p>
-
-          {requests.length > 0 && (
-            <button
-              onClick={() => {
-                setBloodGroupFilter("all");
-                setUrgencyFilter("all");
-              }}
-              className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
-            >
-              Clear Filters
-            </button>
-          )}
-
-          {/* Call to action for new donors */}
-          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Want to be notified when new requests are posted?
-            </p>
-            <Link
-              to="/register"
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-lg transition-colors"
-            >
-              Register as a Donor
-            </Link>
-          </div>
+          <button
+            onClick={() => {
+              setBloodGroupFilter("all");
+              setUrgencyFilter("all");
+            }}
+            className="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+          >
+            Clear Filters
+          </button>
         </motion.div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredRequests.map((req, index) => {
+          {filteredRequests.map((request, index) => {
             // Calculate urgency level
-            const daysUntil = differenceInDays(new Date(req.date), new Date());
+            const daysUntil = differenceInDays(
+              new Date(request.date),
+              new Date()
+            );
             const urgencyLevel =
               daysUntil <= 1 ? "high" : daysUntil <= 3 ? "medium" : "low";
 
             return (
               <DonationRequestCard
-                key={req._id}
-                req={req}
+                key={request._id}
+                request={request}
                 index={index}
                 urgencyLevel={urgencyLevel}
               />
@@ -444,7 +419,7 @@ const DonationRequestsPublic = () => {
       )}
 
       {/* Call to action section */}
-      {!isLoading && requests.length > 0 && (
+      {!isLoading && filteredRequests.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

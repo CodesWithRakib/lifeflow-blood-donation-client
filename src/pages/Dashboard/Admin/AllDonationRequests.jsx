@@ -54,7 +54,6 @@ const AllDonationRequests = () => {
   const [filter, setFilter] = useState("all");
   const axiosSecure = useAxios();
   const { isAdmin, isVolunteer } = useRole();
-
   useTitle("All Donation Requests | LifeFlow - Blood Donation");
 
   const {
@@ -102,11 +101,16 @@ const AllDonationRequests = () => {
     {
       accessorKey: "recipientName",
       header: "Recipient",
-      cell: ({ row }) => (
-        <div className="font-medium text-gray-900 dark:text-gray-100">
-          {row.original.recipientName}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const req = row.original;
+        // Handle both emergency and donation requests
+        const recipientName = req.patientName || req.recipientName || "N/A";
+        return (
+          <div className="font-medium text-gray-900 dark:text-gray-100">
+            {recipientName}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "location",
@@ -201,7 +205,6 @@ const AllDonationRequests = () => {
                 )}
               </>
             )}
-
             {isAdmin && (
               <>
                 <Link
@@ -220,7 +223,6 @@ const AllDonationRequests = () => {
                 </button>
               </>
             )}
-
             <Link
               to={`/dashboard/donation-details/${req._id}`}
               className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
@@ -279,7 +281,6 @@ const AllDonationRequests = () => {
           ? "#ffffff"
           : "#000000",
     });
-
     if (result.isConfirmed) {
       try {
         const toastId = toast.loading("Deleting request...");
@@ -324,7 +325,6 @@ const AllDonationRequests = () => {
             {requests.length} request(s) found
           </p>
         </div>
-
         <div className="flex items-center gap-3">
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
@@ -342,7 +342,6 @@ const AllDonationRequests = () => {
           </div>
         </div>
       </div>
-
       {requests.length > 0 ? (
         <div className="bg-white shadow-sm rounded-xl overflow-hidden dark:bg-gray-800 dark:shadow-none">
           <div className="overflow-x-auto">
@@ -382,7 +381,6 @@ const AllDonationRequests = () => {
               </tbody>
             </table>
           </div>
-
           {/* Pagination */}
           {table.getPageCount() > 1 && (
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
