@@ -3,6 +3,9 @@ import { motion } from "motion/react";
 import { Heart, Quote } from "lucide-react";
 
 const ImpactStories = () => {
+  const handleReadMore = () => {
+    window.location.href = '/register'
+  }
   const stories = [
     {
       name: "Sarah Johnson",
@@ -88,7 +91,7 @@ const ImpactStories = () => {
         </div>
 
         <div className="text-center mt-12">
-          <button className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+          <button onClick={handleReadMore} className="inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors pointer-cursor">
             Read More Stories
           </button>
         </div>

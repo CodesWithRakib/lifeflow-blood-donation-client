@@ -257,6 +257,11 @@ const FeaturedSection = () => {
     },
   };
 
+  const handleJoinCommunity = () => {
+    // Logic to handle joining the community, e.g., redirecting to a sign-up page
+    window.location.href = "/register"; // Example redirect
+  };
+
   return (
     <section
       className="py-16 md:py-24 bg-white dark:bg-gray-900 relative overflow-hidden"
@@ -358,6 +363,7 @@ const FeaturedSection = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handleJoinCommunity}
             className="inline-flex items-center px-8 py-4 rounded-full text-white font-poppins bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl font-semibold text-lg"
             aria-label="Join Our Donor Community"
           >

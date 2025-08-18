@@ -3,6 +3,9 @@ import { motion } from "motion/react";
 import { Heart, ArrowRight } from "lucide-react";
 
 const CallToAction = () => {
+  const handleDonationCenter = () => {
+    window.location.href = "/register";
+  };
   return (
     <section className="py-16 bg-gradient-to-r from-red-600 to-red-700">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -23,6 +26,7 @@ const CallToAction = () => {
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <motion.button
+                onClick={() => (window.location.href = "/register")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center justify-center px-8 py-4 bg-white text-red-600 font-bold rounded-lg shadow-lg hover:bg-gray-100 transition-colors"
@@ -32,6 +36,7 @@ const CallToAction = () => {
               </motion.button>
 
               <motion.button
+                onClick={handleDonationCenter}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white font-bold rounded-lg hover:bg-white/10 transition-colors"
@@ -43,7 +48,7 @@ const CallToAction = () => {
 
             <p className="mt-8 text-red-200 text-sm">
               Already a donor?{" "}
-              <a href="#" className="text-white font-medium underline">
+              <a href="/login" className="text-white font-medium underline">
                 Log in to your account
               </a>
             </p>

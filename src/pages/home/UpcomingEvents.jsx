@@ -1,8 +1,13 @@
 import React from "react";
 import { motion } from "motion/react";
 import { Calendar, MapPin, Clock, Users, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router";
 
 const UpcomingEvents = () => {
+  const navigate = useNavigate();
+  const handleEvents = () => {
+    window.location.href = "/register";
+  };
   const events = [
     {
       title: "Community Blood Drive",
@@ -118,7 +123,10 @@ const UpcomingEvents = () => {
                 </div>
 
                 <div className="mt-4 md:mt-0 md:ml-6">
-                  <button className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors">
+                  <button
+                    onClick={() => navigate("/register")}
+                    className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                  >
                     Register Now
                     <ChevronRight className="ml-2 w-4 h-4" />
                   </button>
@@ -129,7 +137,10 @@ const UpcomingEvents = () => {
         </div>
 
         <div className="text-center mt-10">
-          <button className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          <button
+            onClick={handleEvents}
+            className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
             View All Events
           </button>
         </div>
